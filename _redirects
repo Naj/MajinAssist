@@ -1,0 +1,8 @@
+# Proxy Serper.dev → contourne CORS
+/api/serper/*  https://google.serper.dev/:splat  200
+
+# Proxy Groq API
+/api/groq/*    https://api.groq.com/:splat        200
+
+# Proxy RSS2JSON
+/api/rss/*     https://api.rss2json.com/v1/:splat 200
