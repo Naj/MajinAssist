@@ -216,6 +216,11 @@ body>*{position:relative;z-index:1;}
 .note-row.done .note-text{color:var(--mut);text-decoration:line-through;}
 .note-del{background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px;padding:2px 6px;flex-shrink:0;opacity:0;transition:opacity .15s;}
 .note-row:hover .note-del{opacity:1;}
+.palette-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;}
+.palette-row i{font-size:18px;color:var(--r);flex-shrink:0;width:22px;text-align:center;}
+.palette-row.active,.palette-row:hover{background:rgba(226,74,74,0.1);}
+.palette-row-name{font-size:13px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.palette-row-cat{font-size:11px;color:var(--mut);}
 
 /* MÉTÉO */
 .temp-big{font-family:var(--fonthud);font-size:clamp(24px,4vw,40px);font-weight:900;line-height:1;}
@@ -1107,6 +1112,7 @@ body.dash-editing-media .drag-handle{opacity:1;}
 <div class="inp-bar">
   <i class="ti ti-sparkles inp-icon"></i>
   <input class="main-input" id="mainInput" placeholder="MAJIN attend tes instructions…" onkeydown="if(event.key==='Enter')send()"/>
+  <button class="send-btn" id="appSearchBtn" onclick="openSearchPalette()" title="Rechercher une application (Ctrl+K)" style="background:var(--s2);border:1.5px solid var(--bor);color:var(--txt);padding:9px 12px;"><i class="ti ti-search"></i></button>
   <button class="send-btn" id="searchBtn" onclick="sendWithSearch()" title="Recherche web + IA" style="background:#4285f4;padding:9px 14px;display:none;"><i class="ti ti-world-search"></i></button>
   <button class="send-btn" id="sendBtn" onclick="send()">Envoyer</button>
 </div>
@@ -1818,6 +1824,16 @@ body.dash-editing-media .drag-handle{opacity:1;}
         <button class="btn-sm" onclick="saveReminder()">Sauvegarder</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="searchPaletteModal">
+  <div class="modal-box wide">
+    <div class="modal-title"><i class="ti ti-search" style="color:var(--r);margin-right:8px;"></i> Rechercher une application<button class="modal-close" onclick="closeSearchPalette()">✕</button></div>
+    <input id="paletteInput" placeholder="Tapez pour filtrer toutes vos applications…" autocomplete="off"
+      oninput="renderPaletteResults()" onkeydown="paletteKeyNav(event)"
+      style="width:100%;background:var(--s2);border:1.5px solid var(--bor);color:var(--txt);padding:10px 14px;font-family:var(--font);font-size:14px;border-radius:8px;outline:none;margin-bottom:10px;"/>
+    <div id="paletteResults" style="max-height:360px;overflow-y:auto;"></div>
   </div>
 </div>
 
@@ -3048,7 +3064,7 @@ async function sendWithSearch(){
     const data=await res.json();hideTyping();
     if(data.choices?.[0]){
       let reply=data.choices[0].message.content;
-      reply=handleLaunchCommand(reply);
+      reply=handleActionCommands(reply);
       chatHistory.push({role:'assistant',content:reply});
       addMsgWithSources('MAJIN',reply,searchResults.length?searchResults:null);
     } else addMsg('MAJIN','Erreur : '+(data.error?.message||'réponse vide'));
@@ -3120,7 +3136,11 @@ function buildSystem(){
   const appList=apps.length
     ? '\n\nAPPLICATIONS DISPONIBLES (configurées par l\'utilisateur) :\n'+apps.map((a,i)=>`${i+1}. ${a.name} → ${a.url}`).join('\n')
     : '';
-  return `Tu es majaïne, assistant personnel basé en France pour Najim. Tu réponds toujours en français, de façon concise et chaleureuse.${appList}
+  const now=new Date();
+  const todayLong=now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const todayISO=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  return `Tu es majaïne, assistant personnel basé en France pour Najim. Tu réponds toujours en français, de façon concise et chaleureuse.
+Nous sommes aujourd'hui le ${todayLong} (${todayISO}).${appList}
 
 CAPACITÉ DE LANCEMENT D'APPLICATIONS :
 Si Najim te demande de lancer, ouvrir ou démarrer une application, réponds normalement ET ajoute à la fin de ta réponse la balise suivante (sur une ligne seule) :
@@ -3130,9 +3150,25 @@ Exemples :
 - "Lance Spotify" → réponds + [LAUNCH:https://open.spotify.com]
 - "Ouvre Word" → réponds + [LAUNCH:C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE]
 - "Ouvre Outlook" → réponds + [LAUNCH:https://outlook.office.com]
-
 Si l'application demandée n'est pas dans ta liste, dis-le clairement sans inventer d'URL.
-Ne génère la balise [LAUNCH:...] QUE si tu lances effectivement quelque chose.`;
+
+CAPACITÉ DE PRISE DE NOTE :
+Si Najim te demande de noter quelque chose, de l'ajouter à sa liste, ou de penser à faire quelque chose (sans date précise), réponds normalement ET ajoute :
+[NOTE:texte de la note]
+Exemple : "Note d'acheter du pain" → réponds + [NOTE:Acheter du pain]
+
+CAPACITÉ DE RAPPEL DATÉ :
+Si Najim te demande de lui rappeler quelque chose à une date précise (ou déductible : "demain", "vendredi", "dans une semaine"...), réponds normalement ET ajoute :
+[REMINDER:titre du rappel|YYYY-MM-DD]
+Calcule la date à partir d'aujourd'hui (${todayISO}). Si aucune date n'est donnée ou déductible avec certitude, NE GÉNÈRE PAS la balise — demande plutôt la date.
+Exemple : "Rappelle-moi de renouveler mon passeport le 14 septembre" → réponds + [REMINDER:Renouveler le passeport|${now.getFullYear()}-09-14]
+
+CAPACITÉ MÉTÉO :
+Si Najim demande la météo d'une ville, tu n'as PAS accès aux données météo réelles — ne donne JAMAIS de température ni de condition inventée. Dis simplement que tu actualises le widget météo, et ajoute :
+[WEATHER:Nom de la ville]
+Exemple : "Quel temps fait-il à Lyon ?" → réponds "Je mets à jour le widget météo pour Lyon !" + [WEATHER:Lyon]
+
+RÈGLES GÉNÉRALES : ne génère une balise QUE si l'action correspond réellement à la demande. Plusieurs balises peuvent être combinées dans une même réponse si plusieurs actions sont demandées à la fois. N'invente jamais d'URL, de date ou de donnée que tu ne connais pas.`;
 }
 const SYSTEM='Tu es majaïne, assistant personnel basé en France pour Najim. Tu réponds en français, concis et chaleureux.';
 
@@ -4632,6 +4668,14 @@ function saveReminder(){
   }
   saveRemindersStore();closeModal('reminderModal');renderReminders();updateTabBadge();
 }
+// Création rapide d'un rappel ponctuel (utilisé par l'IA via [REMINDER:titre|YYYY-MM-DD])
+function addReminderQuick(title,date){
+  title=(title||'').trim();date=(date||'').trim();
+  if(!title||!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;
+  reminders.push({id:'rem_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title,date,type:'reminder'});
+  saveRemindersStore();renderReminders();updateTabBadge();
+  return true;
+}
 function deleteReminder(id){
   if(!confirm('Supprimer ce rappel ?'))return;
   reminders=reminders.filter(x=>x.id!==id);
@@ -4649,12 +4693,17 @@ renderReminders();
 function saveNotesStore(){
   try{localStorage.setItem('majin_notes',JSON.stringify(notes));}catch{}
 }
+function addNoteText(text){
+  text=(text||'').trim();if(!text)return false;
+  notes.push({id:'note_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text,done:false,createdAt:Date.now()});
+  saveNotesStore();renderNotes();
+  return true;
+}
 function addNote(){
   const inp=document.getElementById('noteInput');if(!inp)return;
   const text=inp.value.trim();if(!text)return;
-  notes.push({id:'note_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text,done:false,createdAt:Date.now()});
+  addNoteText(text);
   inp.value='';
-  saveNotesStore();renderNotes();
   inp.focus();
 }
 function toggleNoteDone(id){
@@ -4701,6 +4750,104 @@ function renderNotes(){
 }
 renderNotes();
 
+// ===== RECHERCHE GLOBALE D'APPS (Ctrl+K) =====
+let paletteResults=[];
+let paletteActiveIdx=-1;
+
+// Indexe toutes les applications configurées, toutes catégories confondues
+// (réutilise les mêmes sources que getAllAppsForPrompt, utilisé par l'IA)
+function getSearchIndex(){
+  const items=[];
+  const PERSO_CATS=['sante','services','reseaux','ecommerce','sport'];
+  const customCats=JSON.parse(localStorage.getItem('majin_perso_cats')||'{}');
+  [...PERSO_CATS,...Object.keys(customCats)].forEach(cat=>{
+    (persoApps[cat]||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:getCatLabel(cat)}); });
+  });
+  const sectionLabel=(key,fallback)=>headers['hdr_'+key]||fallback;
+  [['m365',m365Apps,'Suite Microsoft 365'],['collab',collabApps,'Outils collaboratifs'],['transport',transportApps,'Transport & Réservations']].forEach(([key,arr,fb])=>{
+    (arr||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:sectionLabel(key,fb)}); });
+  });
+  Object.values(proCustomPanels||{}).forEach(p=>{
+    (p.apps||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:p.label||'Professionnel'}); });
+  });
+  [['plex','Bibliothèque Plex'],['spotify','Spotify'],['ia','IA & Agenda']].forEach(([key,fb])=>{
+    (mediaApps[key]||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:sectionLabel(key,fb)}); });
+  });
+  Object.values(mediaCustomPanels||{}).forEach(p=>{
+    (p.apps||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:p.label||'Médias'}); });
+  });
+  return items;
+}
+function openSearchPalette(){
+  document.getElementById('searchPaletteModal').classList.add('open');
+  const inp=document.getElementById('paletteInput');
+  inp.value='';
+  renderPaletteResults();
+  setTimeout(()=>inp.focus(),50);
+}
+function closeSearchPalette(){
+  closeModal('searchPaletteModal');
+}
+function renderPaletteResults(){
+  const q=(document.getElementById('paletteInput').value||'').trim().toLowerCase();
+  const index=getSearchIndex();
+  const matches=q
+    ? index.filter(a=>a.name.toLowerCase().includes(q)||a.category.toLowerCase().includes(q)).slice(0,40)
+    : index.slice(0,8);
+  paletteResults=matches;
+  paletteActiveIdx=matches.length?0:-1;
+  const el=document.getElementById('paletteResults');
+  if(!matches.length){
+    el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--mut);font-size:13px;">${index.length?`Aucune application trouvée${q?` pour « ${icsEscapeHtml(q)} »`:''}`:'Aucune application configurée pour l\'instant'}</div>`;
+    return;
+  }
+  el.innerHTML=matches.map((a,i)=>`
+    <div class="palette-row${i===0?' active':''}" data-idx="${i}" onclick="openPaletteResult(${i})" onmouseenter="setPaletteActive(${i})">
+      <i class="ti ti-${a.icon}"></i>
+      <div style="flex:1;min-width:0;">
+        <div class="palette-row-name">${icsEscapeHtml(a.name)}</div>
+        <div class="palette-row-cat">${icsEscapeHtml(a.category)}</div>
+      </div>
+    </div>`).join('');
+}
+function setPaletteActive(i){
+  paletteActiveIdx=i;
+  document.querySelectorAll('#paletteResults .palette-row').forEach((el,idx)=>el.classList.toggle('active',idx===i));
+}
+function openPaletteResult(i){
+  const a=paletteResults[i];if(!a)return;
+  closeSearchPalette();
+  openUrl(a.url);
+}
+function scrollPaletteIntoView(){
+  const rows=document.querySelectorAll('#paletteResults .palette-row');
+  const el=rows[paletteActiveIdx];
+  if(el)el.scrollIntoView({block:'nearest'});
+}
+function paletteKeyNav(e){
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    if(paletteActiveIdx<paletteResults.length-1)paletteActiveIdx++;
+    setPaletteActive(paletteActiveIdx);scrollPaletteIntoView();
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    if(paletteActiveIdx>0)paletteActiveIdx--;
+    setPaletteActive(paletteActiveIdx);scrollPaletteIntoView();
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    if(paletteActiveIdx>=0)openPaletteResult(paletteActiveIdx);
+  } else if(e.key==='Escape'){
+    closeSearchPalette();
+  }
+}
+// Raccourci global Ctrl+K / Cmd+K — n'enregistre que l'écouteur, ne s'exécute qu'au clavier
+document.addEventListener('keydown',(e)=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    openSearchPalette();
+  }
+});
+
 // ===== GROQ AI =====
 function connectAI(){
   const k=document.getElementById('apiKeyInp').value.trim();
@@ -4726,24 +4873,50 @@ if(apiKey&&apiKey.startsWith('gsk_')){document.getElementById('apiKeyInp').value
   if(autoEl)autoEl.checked=braveAuto;
 })();
 
-// Détecte et exécute la commande [LAUNCH:...] dans la réponse de l'IA
-function handleLaunchCommand(reply){
-  const match=reply.match(/\[LAUNCH:([^\]]+)\]/);
-  if(!match) return reply;
-  const target=match[1].trim();
-  // Retirer la balise du texte affiché
-  const cleanReply=reply.replace(/\n?\[LAUNCH:[^\]]+\]/,'').trim();
-  // Lancer après un court délai pour laisser le message s'afficher
-  setTimeout(()=>{
-    if(target.startsWith('http')){
-      openUrl(target);
-    } else if(window.majinElectron?.openLocal){
-      window.majinElectron.openLocal(target);
-    } else {
-      openUrl(target);
-    }
-  }, 400);
-  return cleanReply;
+// Détecte et exécute les balises d'action générées par l'IA dans sa réponse :
+// [LAUNCH:url_ou_chemin], [NOTE:texte], [REMINDER:titre|YYYY-MM-DD], [WEATHER:ville]
+// Plusieurs balises peuvent coexister dans une même réponse.
+function aiShowWeatherFor(city){
+  city=(city||'').trim();if(!city)return;
+  loadWeather(city); // affichage ponctuel — ne touche pas à la liste de villes enregistrées
+}
+function handleActionCommands(reply){
+  let clean=reply;
+
+  const launchMatch=reply.match(/\[LAUNCH:([^\]]+)\]/);
+  if(launchMatch){
+    const target=launchMatch[1].trim();
+    clean=clean.replace(/\n?\[LAUNCH:[^\]]+\]/,'').trim();
+    setTimeout(()=>{
+      if(target.startsWith('http')){
+        openUrl(target);
+      } else if(window.majinElectron?.openLocal){
+        window.majinElectron.openLocal(target);
+      } else {
+        openUrl(target);
+      }
+    },400);
+  }
+
+  const noteMatch=reply.match(/\[NOTE:([^\]]+)\]/);
+  if(noteMatch){
+    clean=clean.replace(/\n?\[NOTE:[^\]]+\]/,'').trim();
+    addNoteText(noteMatch[1]);
+  }
+
+  const reminderMatch=reply.match(/\[REMINDER:([^|\]]+)\|(\d{4}-\d{2}-\d{2})\]/);
+  if(reminderMatch){
+    clean=clean.replace(/\n?\[REMINDER:[^\]]+\]/,'').trim();
+    addReminderQuick(reminderMatch[1],reminderMatch[2]);
+  }
+
+  const weatherMatch=reply.match(/\[WEATHER:([^\]]+)\]/);
+  if(weatherMatch){
+    clean=clean.replace(/\n?\[WEATHER:[^\]]+\]/,'').trim();
+    aiShowWeatherFor(weatherMatch[1]);
+  }
+
+  return clean;
 }
 
 async function send(){
@@ -4764,7 +4937,7 @@ async function send(){
     const data=await res.json();hideTyping();
     if(data.choices?.[0]){
       let reply=data.choices[0].message.content;
-      reply=handleLaunchCommand(reply);
+      reply=handleActionCommands(reply);
       chatHistory.push({role:'assistant',content:reply});addMsg('MAJIN',reply);
     }
     else addMsg('MAJIN','Erreur : '+(data.error?.message||'réponse vide'));
