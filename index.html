@@ -5,6 +5,18 @@
 <title>MAJIN v38</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#09090b"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png"/>
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MAJIN"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -170,6 +182,8 @@ body>*{position:relative;z-index:1;}
 .tab:hover::after{opacity:0.06;transform:scaleY(1);}
 .tab.on{color:var(--r);border-bottom-color:var(--r);background:rgba(226,74,74,0.05);}
 .tab.on::after{opacity:0.08;transform:scaleY(1);}
+.tab-event-badge{display:none;position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--r);box-shadow:0 0 6px rgba(226,74,74,0.9);animation:tabBadgePulse 1.5s ease-in-out infinite;z-index:2;}
+@keyframes tabBadgePulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.55;transform:scale(1.35);}}
 
 /* CONTENT */
 .content{flex:1;overflow:auto;min-height:0;padding:14px 18px 14px;}
@@ -1093,7 +1107,7 @@ body.dash-editing-media .drag-handle{opacity:1;}
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab on" onclick="swTab(this,'perso')">Personnel</button>
+  <button class="tab on" onclick="swTab(this,'perso')">Personnel<span class="tab-event-badge" id="tabBadgePerso" title="Événement à venir"></span></button>
   <button class="tab" onclick="swTab(this,'pro')">Professionnel</button>
   <button class="tab" onclick="swTab(this,'media')">Médias</button>
   <button class="tab" onclick="swTab(this,'cfg')">Paramètres</button>
@@ -1145,6 +1159,22 @@ body.dash-editing-media .drag-handle{opacity:1;}
         </button>
       </div>
       <div id="calView" style="flex:1;min-height:180px;display:flex;flex-direction:column;"></div>
+    </div>
+  </div>
+
+  <!-- RAPPELS & ANNIVERSAIRES -->
+  <div class="dash-widget col-4" id="dw-reminders" data-wid="reminders">
+    <div class="drag-handle" title="Déplacer">⠿</div>
+    <div class="resize-handle"></div>
+    <div class="pan" style="border:none;min-height:200px;display:flex;flex-direction:column;background:transparent;">
+      <div class="pan-title">
+        <i class="ti ti-bell" style="color:var(--r);"></i>
+        <span class="pan-title-editable" ondblclick="editHeader(this,'hdr_reminders')" id="hdr_reminders_display">Rappels &amp; Anniversaires</span>
+        <button class="btn-ghost" style="margin-left:auto;font-size:11px;padding:3px 10px;" onclick="toggleRemindersEdit()">
+          <i class="ti ti-edit" id="remindersEditIcon"></i> <span id="remindersEditLabel">Modifier</span>
+        </button>
+      </div>
+      <div id="remindersList" style="flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:280px;"></div>
     </div>
   </div>
 
@@ -1502,10 +1532,16 @@ body.dash-editing-media .drag-handle{opacity:1;}
       <button class="btn-sm gmg" onclick="saveCalIframe()"><i class="ti ti-check"></i> Valider</button>
     </div>
     <div class="setting-row">
+      <div class="setting-lbl">URL ICS (Google/Outlook/iCloud…) :</div>
+      <input class="setting-inp" id="calIcsUrl" placeholder="https://...basic.ics ou webcal://..."/>
+      <button class="btn-sm gmg" onclick="saveCalIcs()"><i class="ti ti-check"></i> Valider</button>
+    </div>
+    <div class="setting-row">
       <div class="setting-lbl">Affichage :</div>
       <select class="setting-inp" id="calDisplayMode" onchange="saveCalMode()">
         <option value="events">Événements manuels (exemple)</option>
         <option value="iframe">Iframe Google Agenda (votre vrai calendrier)</option>
+        <option value="ics">Agenda ICS (vrais événements, sans connexion)</option>
       </select>
     </div>
     <div class="setting-row"><div class="setting-lbl">Statut :</div><div class="setting-val" id="calStatus">Non configuré</div></div>
@@ -1716,17 +1752,47 @@ body.dash-editing-media .drag-handle{opacity:1;}
 
 <div class="modal" id="calModal">
   <div class="modal-box wide">
-    <div class="modal-title"><i class="ti ti-calendar-event" style="color:#ea4335;margin-right:8px;"></i> Configurer Google Agenda<button class="modal-close" onclick="closeModal('calModal')">✕</button></div>
+    <div class="modal-title"><i class="ti ti-calendar-event" style="color:#ea4335;margin-right:8px;"></i> Configurer mon agenda<button class="modal-close" onclick="closeModal('calModal')">✕</button></div>
+    <div class="info-box g" style="margin-bottom:12px;">
+      <strong style="color:var(--txt);">Option recommandée — Lien ICS (vrais événements, pas d'iframe) :</strong><br>
+      <span style="color:#34a853;font-weight:800;">Google :</span> calendar.google.com → ⚙️ Paramètres → votre calendrier → "Intégrer le calendrier" → copiez l'<strong style="color:var(--txt);">"Adresse secrète au format iCal"</strong><br>
+      <span style="color:#34a853;font-weight:800;">Outlook :</span> outlook.com → Calendrier → Partager → "Publier un calendrier" → copiez le lien <strong style="color:var(--txt);">ICS</strong><br>
+      <span style="color:#34a853;font-weight:800;">iCloud :</span> icloud.com/calendar → ⋯ sur le calendrier → "Calendrier public" → copiez le lien (commence par webcal://)<br>
+      Collez ensuite ce lien dans Paramètres → Agenda → "URL ICS" → Valider, puis choisissez "Agenda ICS" dans le mode d'affichage.
+    </div>
     <div class="info-box g" style="margin-bottom:16px;">
-      <strong style="color:var(--txt);">Étapes pour votre vrai calendrier :</strong><br>
+      <strong style="color:var(--txt);">Alternative — Iframe Google Agenda :</strong><br>
       <span style="color:#34a853;font-weight:800;">1.</span> <a href="#" onclick="openUrl('https://calendar.google.com');return false;" style="color:#34a853;">calendar.google.com ↗</a> → ⚙️ Paramètres → votre calendrier<br>
       <span style="color:#34a853;font-weight:800;">2.</span> Section <strong style="color:var(--txt);">"Intégrer le calendrier"</strong> → copiez l'URL src de l'iframe<br>
-      <span style="color:#34a853;font-weight:800;">3.</span> Collez dans Paramètres → Google Agenda → URL iframe → Valider<br>
+      <span style="color:#34a853;font-weight:800;">3.</span> Collez dans Paramètres → Agenda → URL iframe → Valider<br>
       <span style="color:#34a853;font-weight:800;">4.</span> Sélectionnez "Iframe" dans le mode d'affichage
     </div>
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="btn-sm gmg" onclick="openUrl('https://calendar.google.com')"><i class="ti ti-external-link"></i> Ouvrir Google Agenda</button>
       <button class="btn-ghost" onclick="closeModal('calModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reminderModal">
+  <div class="modal-box">
+    <div class="modal-title" id="reminderModalTitle">🔔 Nouveau rappel<button class="modal-close" onclick="closeModal('reminderModal')">✕</button></div>
+    <div class="field"><label>Titre</label><input id="remTitle" placeholder="Ex : Anniversaire de Maïssa"/></div>
+    <div class="field"><label>Date</label><input id="remDate" type="date"/></div>
+    <div class="field"><label>Type</label>
+      <select id="remType">
+        <option value="reminder">Rappel ponctuel</option>
+        <option value="birthday">Anniversaire (tous les ans)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:6px;align-items:center;">
+      <button class="btn-sm" id="remDeleteBtn" onclick="deleteReminderFromModal()" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid rgba(220,38,38,0.4);display:none;">
+        <i class="ti ti-trash"></i> Supprimer
+      </button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="btn-ghost" onclick="closeModal('reminderModal')">Annuler</button>
+        <button class="btn-sm" onclick="saveReminder()">Sauvegarder</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2981,6 +3047,10 @@ let currentCityIdx=0;
 let apiKey=localStorage.getItem('majin_api_key')||'';
 let calIframeUrl=localStorage.getItem('majin_cal_iframe')||'';
 let calMode=localStorage.getItem('majin_cal_mode')||'events';
+let calIcsUrl=localStorage.getItem('majin_cal_ics')||'';
+let calIcsEvents=null;      // événements parsés en mémoire (cache de session)
+let calIcsLoading=false;
+let calIcsError='';
 let connected=false,chatHistory=[],speaking=false,recognition=null,wt=0;
 let editModes={perso:false,'perso-sante':false,'perso-services':false,'perso-reseaux':false,'perso-ecommerce':false,'perso-sport':false,m365:false,collab:false,transport:false,plex:false,spotify:false,ia:false};
 let editingList=null,editingIdx=null;
@@ -4129,6 +4199,8 @@ function renderCalView(){
           <button class="cal-tool-btn" style="margin-left:auto;" onclick="openCalendarCfg()">⚙️ Config</button>
         </div>
       </div>`;
+  } else if(calMode==='ics'){
+    renderIcsAgenda(el);
   } else {
     el.innerHTML=`
       <div id="agendaList">
@@ -4158,7 +4230,23 @@ function saveCalIframe(){
   document.getElementById('calStatus').textContent='Iframe configurée ✓';
   renderCalView();closeModal('calModal');
 }
-function saveCalMode(){calMode=document.getElementById('calDisplayMode').value;localStorage.setItem('majin_cal_mode',calMode);renderCalView();}
+function saveCalIcs(){
+  const url=document.getElementById('calIcsUrl').value.trim();if(!url)return alert('Collez le lien ICS.');
+  calIcsUrl=url;localStorage.setItem('majin_cal_ics',url);
+  calMode='ics';localStorage.setItem('majin_cal_mode','ics');
+  document.getElementById('calDisplayMode').value='ics';
+  document.getElementById('calStatus').textContent='Agenda ICS configuré ✓';
+  calIcsEvents=null;calIcsError='';
+  renderCalView();closeModal('calModal');
+  updateTabBadge();
+  loadIcsCalendar(true);
+}
+function saveCalMode(){
+  calMode=document.getElementById('calDisplayMode').value;localStorage.setItem('majin_cal_mode',calMode);
+  renderCalView();
+  updateTabBadge();
+  if(calMode==='ics'&&calIcsUrl&&!calIcsEvents)loadIcsCalendar(false);
+}
 function goToCalendarSettings(){
   const cfgTab=[...document.querySelectorAll('.tab')].find(t=>t.textContent.includes('Param'));
   if(cfgTab)swTab(cfgTab,'cfg');
@@ -4168,7 +4256,366 @@ function goToCalendarSettings(){
   },120);
 }
 function connectGoogleCal(){const email=document.getElementById('gmailAccount')?.value.trim()||'';if(email)localStorage.setItem('majin_gmail',email);openUrl('https://calendar.google.com');}
+
+// ===== AGENDA ICS — parsing RFC5545 minimal (sans dépendance externe) =====
+
+function icsEscapeHtml(s){
+  return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function icsUnescapeText(s){
+  return (s||'').replace(/\\n/gi,' ').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+}
+function icsUnfold(text){
+  return text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').reduce((lines,line)=>{
+    if(/^[ \t]/.test(line)&&lines.length){lines[lines.length-1]+=line.slice(1);}
+    else{lines.push(line);}
+    return lines;
+  },[]);
+}
+function icsParseDateValue(value,params){
+  if(!value)return null;
+  params=params||{};
+  if(params.VALUE==='DATE'||/^\d{8}$/.test(value)){
+    const y=+value.slice(0,4),m=+value.slice(4,6)-1,d=+value.slice(6,8);
+    return {date:new Date(y,m,d),allDay:true};
+  }
+  const m=value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/);
+  if(!m)return null;
+  const [,y,mo,d,h,mi,s,z]=m;
+  if(z)return {date:new Date(Date.UTC(+y,+mo-1,+d,+h,+mi,+s)),allDay:false};
+  // Sans 'Z' : traité en heure locale du navigateur (limitation connue, pas de table TZID)
+  return {date:new Date(+y,+mo-1,+d,+h,+mi,+s),allDay:false};
+}
+function icsParseLine(line){
+  const i=line.indexOf(':');if(i===-1)return null;
+  const left=line.slice(0,i),value=line.slice(i+1);
+  const parts=left.split(';');
+  const key=parts[0].toUpperCase();
+  const params={};
+  for(let j=1;j<parts.length;j++){
+    const eq=parts[j].indexOf('=');if(eq===-1)continue;
+    params[parts[j].slice(0,eq).toUpperCase()]=parts[j].slice(eq+1);
+  }
+  return {key,value,params};
+}
+function parseICS(text){
+  const lines=icsUnfold(text);
+  const events=[];let cur=null;
+  for(const raw of lines){
+    const line=raw.trim();
+    if(line==='BEGIN:VEVENT'){cur={};continue;}
+    if(line==='END:VEVENT'){if(cur)events.push(cur);cur=null;continue;}
+    if(!cur)continue;
+    const p=icsParseLine(line);if(!p)continue;
+    if(p.key==='DTSTART')cur.dtstart=icsParseDateValue(p.value,p.params);
+    else if(p.key==='DTEND')cur.dtend=icsParseDateValue(p.value,p.params);
+    else if(p.key==='SUMMARY')cur.summary=icsUnescapeText(p.value);
+    else if(p.key==='LOCATION')cur.location=icsUnescapeText(p.value);
+    else if(p.key==='RRULE')cur.rrule=p.value;
+    else if(p.key==='EXDATE'){(cur.exdates=cur.exdates||[]).push(icsParseDateValue(p.value,p.params));}
+    else if(p.key==='UID')cur.uid=p.value;
+  }
+  return events;
+}
+const ICS_DAY_MAP={SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
+function icsParseRRule(rrule){
+  const out={};
+  rrule.split(';').forEach(part=>{const [k,v]=part.split('=');if(k)out[k.toUpperCase()]=v;});
+  return out;
+}
+function icsExpandEvent(ev,rangeStart,rangeEnd){
+  if(!ev||!ev.dtstart)return [];
+  const durationMs=ev.dtend?(ev.dtend.date-ev.dtstart.date):(ev.dtstart.allDay?86400000:3600000);
+  const exTimes=new Set((ev.exdates||[]).filter(Boolean).map(e=>e.date.getTime()));
+  const occurrences=[];
+
+  if(!ev.rrule){
+    if(ev.dtstart.date<=rangeEnd&&(ev.dtstart.date.getTime()+durationMs)>=rangeStart&&!exTimes.has(ev.dtstart.date.getTime())){
+      occurrences.push({start:ev.dtstart.date,end:new Date(ev.dtstart.date.getTime()+durationMs),allDay:ev.dtstart.allDay});
+    }
+    return occurrences;
+  }
+
+  const r=icsParseRRule(ev.rrule);
+  const freq=r.FREQ;
+  const interval=parseInt(r.INTERVAL||'1',10)||1;
+  const count=r.COUNT?parseInt(r.COUNT,10):null;
+  const until=r.UNTIL?icsParseDateValue(r.UNTIL,{}).date:null;
+  const byday=r.BYDAY?r.BYDAY.split(',').map(d=>ICS_DAY_MAP[d.slice(-2)]).filter(d=>d!==undefined):null;
+
+  let cursor=new Date(ev.dtstart.date);
+  let n=0,safety=0;
+  while(safety++<2000){
+    if(count!==null&&n>=count)break;
+    if(until&&cursor>until)break;
+    if(cursor>rangeEnd)break;
+
+    if(freq==='WEEKLY'&&byday&&byday.length){
+      const weekStart=new Date(cursor);weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+      for(const wd of byday){
+        if(count!==null&&n>=count)break;
+        const occ=new Date(weekStart);occ.setDate(weekStart.getDate()+wd);
+        occ.setHours(ev.dtstart.date.getHours(),ev.dtstart.date.getMinutes(),ev.dtstart.date.getSeconds(),0);
+        if(occ<ev.dtstart.date)continue;
+        if(until&&occ>until)continue;
+        n++;
+        if(!exTimes.has(occ.getTime())&&occ<=rangeEnd&&(occ.getTime()+durationMs)>=rangeStart){
+          occurrences.push({start:occ,end:new Date(occ.getTime()+durationMs),allDay:ev.dtstart.allDay});
+        }
+      }
+      cursor.setDate(cursor.getDate()+7*interval);
+      continue;
+    }
+
+    n++;
+    if(!exTimes.has(cursor.getTime())&&cursor<=rangeEnd&&(cursor.getTime()+durationMs)>=rangeStart){
+      occurrences.push({start:new Date(cursor),end:new Date(cursor.getTime()+durationMs),allDay:ev.dtstart.allDay});
+    }
+
+    if(freq==='DAILY')cursor.setDate(cursor.getDate()+interval);
+    else if(freq==='WEEKLY')cursor.setDate(cursor.getDate()+7*interval);
+    else if(freq==='MONTHLY')cursor.setMonth(cursor.getMonth()+interval);
+    else if(freq==='YEARLY')cursor.setFullYear(cursor.getFullYear()+interval);
+    else break; // FREQ non supportée → on s'arrête plutôt que boucler
+  }
+  return occurrences;
+}
+function getUpcomingIcsAgenda(events,daysAhead,maxItems){
+  daysAhead=daysAhead||10;maxItems=maxItems||15;
+  const now=new Date();
+  const rangeStart=new Date(now);rangeStart.setHours(0,0,0,0);
+  const rangeEnd=new Date(rangeStart);rangeEnd.setDate(rangeEnd.getDate()+daysAhead);
+  let all=[];
+  (events||[]).forEach(ev=>{
+    icsExpandEvent(ev,rangeStart,rangeEnd).forEach(occ=>{
+      all.push(Object.assign(occ,{summary:ev.summary||'(Sans titre)',location:ev.location||''}));
+    });
+  });
+  all.sort((a,b)=>a.start-b.start);
+  all=all.filter(o=>o.end>=now);
+  return all.slice(0,maxItems);
+}
+async function loadIcsCalendar(force){
+  if(!calIcsUrl)return;
+  if(calIcsLoading)return;
+  calIcsLoading=true;calIcsError='';
+  if(calMode==='ics')renderCalView();
+  try{
+    const res=await fetch('/api/ics-proxy?url='+encodeURIComponent(calIcsUrl));
+    if(!res.ok)throw new Error(await res.text().catch(()=>'')||('Erreur '+res.status));
+    const text=await res.text();
+    calIcsEvents=parseICS(text);
+    try{localStorage.setItem('majin_cal_ics_cache',JSON.stringify({fetchedAt:Date.now(),raw:text}));}catch{}
+  }catch(err){
+    calIcsError=(err&&err.message)||'Erreur de chargement du calendrier.';
+    if(!calIcsEvents){
+      try{
+        const cached=JSON.parse(localStorage.getItem('majin_cal_ics_cache')||'null');
+        if(cached&&cached.raw)calIcsEvents=parseICS(cached.raw);
+      }catch{}
+    }
+  }finally{
+    calIcsLoading=false;
+    if(calMode==='ics')renderCalView();
+    updateTabBadge();
+  }
+}
+function renderIcsAgenda(el){
+  if(!calIcsUrl){
+    el.innerHTML=`
+      <div style="padding:8px 12px;background:rgba(226,74,74,0.08);border:1px solid rgba(226,74,74,0.3);border-radius:8px;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-info-circle" style="color:var(--r);"></i>
+        <span>Aucun lien ICS configuré → <a href="#" onclick="openCalendarCfg();return false;" style="color:var(--r);">Config ↗</a></span>
+      </div>`;
+    return;
+  }
+  if(calIcsLoading&&!calIcsEvents){
+    el.innerHTML=`<div style="padding:20px;text-align:center;color:var(--mut);font-size:12px;">Chargement de l'agenda…</div>`;
+    return;
+  }
+  if(calIcsError&&!calIcsEvents){
+    el.innerHTML=`
+      <div style="padding:8px 12px;background:rgba(226,74,74,0.08);border:1px solid rgba(226,74,74,0.3);border-radius:8px;font-size:12px;color:var(--mut);">
+        <i class="ti ti-alert-triangle" style="color:var(--r);"></i> ${icsEscapeHtml(calIcsError)}
+        <div style="margin-top:6px;"><button class="btn-ghost" style="font-size:11px;padding:3px 10px;" onclick="loadIcsCalendar(true)">Réessayer</button></div>
+      </div>`;
+    return;
+  }
+
+  const agenda=getUpcomingIcsAgenda(calIcsEvents||[]);
+  const today=new Date();today.setHours(0,0,0,0);
+  const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
+  const now=new Date();
+
+  let lastDayKey='',rows='';
+  agenda.forEach(o=>{
+    const dayKey=o.start.toDateString();
+    if(dayKey!==lastDayKey){
+      lastDayKey=dayKey;
+      const d0=new Date(o.start);d0.setHours(0,0,0,0);
+      let label;
+      if(d0.getTime()===today.getTime())label="Aujourd'hui";
+      else if(d0.getTime()===tomorrow.getTime())label='Demain';
+      else label=o.start.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'});
+      rows+=`<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--r);margin:10px 0 4px;">${label}</div>`;
+    }
+    const isNow=o.start<=now&&o.end>=now;
+    const time=o.allDay?'Journée':o.start.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    rows+=`<div class="ev${isNow?' ev-now':''}"><div class="ev-time">${time}</div><div><div class="ev-name">${icsEscapeHtml(o.summary)}</div>${o.location?`<div class="ev-sub">${icsEscapeHtml(o.location)}</div>`:''}</div></div>`;
+  });
+  if(!rows)rows=`<div style="padding:16px;text-align:center;color:var(--mut);font-size:12px;">Aucun événement à venir 🎉</div>`;
+
+  el.innerHTML=`
+    <div id="agendaList" style="flex:1;overflow-y:auto;max-height:280px;">${rows}</div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);">
+      <i class="ti ti-refresh" style="cursor:pointer;" onclick="loadIcsCalendar(true)" title="Actualiser"></i>
+      <span>Agenda ICS · ${agenda.length} événement${agenda.length>1?'s':''}</span>
+      <a href="#" onclick="openCalendarCfg();return false;" style="margin-left:auto;color:var(--ai);">⚙️ Config</a>
+    </div>`;
+}
+
+function updateTabBadge(){
+  const badge=document.getElementById('tabBadgePerso');
+  if(!badge)return;
+  const now=new Date();
+  const soon=new Date(now.getTime()+3600000); // dans l'heure qui vient
+  let title='';
+
+  // 1) Agenda ICS — événement chronométré dans l'heure qui vient
+  if(calMode==='ics'&&calIcsUrl&&calIcsEvents){
+    const agenda=getUpcomingIcsAgenda(calIcsEvents,2,50);
+    const next=agenda.find(o=>!o.allDay&&o.start<=soon&&o.end>=now);
+    if(next){
+      const inProgress=next.start<=now;
+      const t=next.start.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      title=inProgress?`${next.summary} (en cours)`:`${next.summary} à ${t}`;
+    }
+  }
+
+  // 2) Rappels / anniversaires du jour (priorité si rien côté agenda)
+  if(!title&&typeof reminders!=='undefined'&&reminders.length){
+    const todays=getUpcomingReminders(1,5);
+    if(todays.length){
+      const r=todays[0];
+      title=r.type==='birthday'?`🎂 ${r.title}${r.age!=null?' ('+r.age+' ans)':''}`:`🔔 ${r.title}`;
+    }
+  }
+
+  if(title){badge.style.display='block';badge.title=title;}
+  else{badge.style.display='none';}
+}
 renderCalView();
+if(calMode==='ics'&&calIcsUrl)loadIcsCalendar(false);
+setInterval(()=>{ if(!document.hidden&&calMode==='ics'&&calIcsUrl)loadIcsCalendar(false); },15*60*1000);
+setInterval(updateTabBadge,60*1000); // recalcule "dans l'heure" même sans nouveau fetch
+updateTabBadge();
+
+// ===== RAPPELS & ANNIVERSAIRES =====
+// Réutilise le même moteur de récurrence que l'agenda ICS (icsExpandEvent) :
+// un anniversaire est juste un événement "toute la journée" avec RRULE:FREQ=YEARLY.
+let reminders=JSON.parse(localStorage.getItem('majin_reminders')||'[]');
+let remindersEditMode=false;
+let editingReminderId=null;
+
+function saveRemindersStore(){
+  try{localStorage.setItem('majin_reminders',JSON.stringify(reminders));}catch{}
+}
+function reminderToIcsEvent(r){
+  const [y,m,d]=r.date.split('-').map(Number);
+  const ev={summary:r.title,dtstart:{date:new Date(y,m-1,d),allDay:true}};
+  if(r.type==='birthday')ev.rrule='FREQ=YEARLY';
+  return ev;
+}
+function getUpcomingReminders(daysAhead,maxItems){
+  daysAhead=daysAhead||365;maxItems=maxItems||50;
+  const now=new Date();
+  const rangeStart=new Date(now);rangeStart.setHours(0,0,0,0);
+  const rangeEnd=new Date(rangeStart);rangeEnd.setDate(rangeEnd.getDate()+daysAhead);
+  let all=[];
+  reminders.forEach(r=>{
+    const ev=reminderToIcsEvent(r);
+    icsExpandEvent(ev,rangeStart,rangeEnd).forEach(occ=>{
+      let age=null;
+      if(r.type==='birthday'){const by=+r.date.split('-')[0];age=occ.start.getFullYear()-by;}
+      all.push({start:occ.start,end:occ.end,title:r.title,type:r.type,id:r.id,age});
+    });
+  });
+  all.sort((a,b)=>a.start-b.start);
+  all=all.filter(o=>o.end>=now);
+  return all.slice(0,maxItems);
+}
+function renderReminders(){
+  const el=document.getElementById('remindersList');if(!el)return;
+  const upcoming=getUpcomingReminders(365,50);
+  const today0=new Date();today0.setHours(0,0,0,0);
+  let rows='';
+  upcoming.forEach(o=>{
+    const d0=new Date(o.start);d0.setHours(0,0,0,0);
+    const diffDays=Math.round((d0-today0)/86400000);
+    const when=diffDays===0?"Aujourd'hui":diffDays===1?'Demain':`Dans ${diffDays} jours`;
+    const icon=o.type==='birthday'?'🎂':'🔔';
+    const ageTxt=(o.type==='birthday'&&o.age!=null)?` · ${o.age} ans`:'';
+    rows+=`<div class="ev"${remindersEditMode?` style="cursor:pointer;" onclick="openReminderModal('${o.id}')"`:''}>
+      <div class="ev-time" style="min-width:50px;">${icon}</div>
+      <div style="flex:1;min-width:0;"><div class="ev-name">${icsEscapeHtml(o.title)}</div><div class="ev-sub">${when}${ageTxt}</div></div>
+      ${remindersEditMode?`<button onclick="event.stopPropagation();deleteReminder('${o.id}')" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0;">✕</button>`:''}
+    </div>`;
+  });
+  if(!rows)rows=`<div style="padding:16px;text-align:center;color:var(--mut);font-size:12px;">Aucun rappel à venir 🎉</div>`;
+  if(remindersEditMode)rows+=`<button class="btn-ghost" style="margin-top:6px;font-size:12px;width:100%;" onclick="openReminderModal(null)"><i class="ti ti-plus"></i> Ajouter un rappel</button>`;
+  el.innerHTML=rows;
+}
+function toggleRemindersEdit(){
+  remindersEditMode=!remindersEditMode;
+  const icon=document.getElementById('remindersEditIcon');
+  const label=document.getElementById('remindersEditLabel');
+  if(icon)icon.className=remindersEditMode?'ti ti-check':'ti ti-edit';
+  if(label)label.textContent=remindersEditMode?'Terminer':'Modifier';
+  renderReminders();
+}
+function openReminderModal(id){
+  editingReminderId=id;
+  const titleEl=document.getElementById('reminderModalTitle');
+  const delBtn=document.getElementById('remDeleteBtn');
+  if(id){
+    const r=reminders.find(x=>x.id===id);if(!r)return;
+    document.getElementById('remTitle').value=r.title;
+    document.getElementById('remDate').value=r.date;
+    document.getElementById('remType').value=r.type;
+    if(titleEl)titleEl.innerHTML='✏️ Modifier le rappel<button class="modal-close" onclick="closeModal(\'reminderModal\')">✕</button>';
+    if(delBtn)delBtn.style.display='';
+  } else {
+    document.getElementById('remTitle').value='';
+    document.getElementById('remDate').value='';
+    document.getElementById('remType').value='reminder';
+    if(titleEl)titleEl.innerHTML='🔔 Nouveau rappel<button class="modal-close" onclick="closeModal(\'reminderModal\')">✕</button>';
+    if(delBtn)delBtn.style.display='none';
+  }
+  document.getElementById('reminderModal').classList.add('open');
+}
+function saveReminder(){
+  const title=document.getElementById('remTitle').value.trim();
+  const date=document.getElementById('remDate').value;
+  const type=document.getElementById('remType').value;
+  if(!title||!date)return alert('Titre et date obligatoires.');
+  if(editingReminderId){
+    const r=reminders.find(x=>x.id===editingReminderId);
+    if(r){r.title=title;r.date=date;r.type=type;}
+  } else {
+    reminders.push({id:'rem_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title,date,type});
+  }
+  saveRemindersStore();closeModal('reminderModal');renderReminders();updateTabBadge();
+}
+function deleteReminder(id){
+  if(!confirm('Supprimer ce rappel ?'))return;
+  reminders=reminders.filter(x=>x.id!==id);
+  saveRemindersStore();renderReminders();updateTabBadge();
+}
+function deleteReminderFromModal(){
+  if(editingReminderId)deleteReminder(editingReminderId);
+  closeModal('reminderModal');
+}
+renderReminders();
 
 // ===== GROQ AI =====
 function connectAI(){
@@ -5783,6 +6230,7 @@ window.addEventListener('load',()=>{
   const sAc=localStorage.getItem('majin_accent');if(sAc)setAccent(sAc);
   // ── Calendrier
   const si=localStorage.getItem('majin_cal_iframe');if(si){const el=document.getElementById('calIframeUrl');if(el)el.value=si;calIframeUrl=si;}
+  const sics=localStorage.getItem('majin_cal_ics');if(sics){const el=document.getElementById('calIcsUrl');if(el)el.value=sics;}
   const sm=localStorage.getItem('majin_cal_mode');if(sm){calMode=sm;const sel=document.getElementById('calDisplayMode');if(sel)sel.value=sm;}
   const sg=localStorage.getItem('majin_gmail');if(sg){const el=document.getElementById('gmailAccount');if(el)el.value=sg;}
   restoreHeaders();renderCalView();
@@ -5996,7 +6444,7 @@ const PREF_KEYS = [
   'majin_view_modes',
   'majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
   'majin_cities','majin_weather_src','majin_weather_src_url',
-  'majin_cal_mode','majin_cal_iframe','majin_gmail',
+  'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_gmail',
   'majin_news_src','majin_news_custom_url','majin_ticker_speed',
   'majin_theme','majin_compact','majin_accent','majin_wallpaper','majin_wp_opacity',
   'majin_tts','majin_tts_voice','majin_tts_rate','majin_tts_pitch','majin_tts_volume',
@@ -6137,6 +6585,18 @@ function applyImportedPrefs(jsonStr){
     </div>
   </div>
 </div>
+
+<script>
+// Enregistrement du Service Worker (installabilité PWA — pas de cache offline,
+// voir sw.js : MAJIN dépend d'API live donc pas de mode hors-ligne complet).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
+</script>
 
 </body>
 </html>
