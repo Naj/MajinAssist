@@ -1522,6 +1522,24 @@ body.dash-editing-media .drag-handle{opacity:1;}
     </div>
   </div>
 
+  <!-- LANCEUR LOCAL SANS ELECTRON -->
+  <div class="pan" style="margin-bottom:14px;" id="localLauncherPan">
+    <div class="pan-title"><i class="ti ti-device-desktop" style="color:#f59e0b;"></i><span style="color:#f59e0b;">Lancer des apps de bureau (sans Electron)</span>
+      <button class="btn-ghost" style="margin-left:auto;font-size:11px;padding:3px 10px;" onclick="document.getElementById('localLauncherHelpModal').classList.add('open')">
+        <i class="ti ti-help-circle" style="color:#f59e0b;"></i> Comment ça marche ?
+      </button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">Lanceur installé sur ce PC :</div>
+      <input type="checkbox" id="localLauncherToggle" style="accent-color:#f59e0b;width:16px;height:16px;" onchange="saveLocalLauncherConfigured()"/>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-sm" style="background:#f59e0b;" onclick="downloadLocalLauncherInstaller()"><i class="ti ti-download"></i> Télécharger l'installateur (.bat)</button>
+      <button class="btn-ghost" style="font-size:12px;" onclick="downloadLocalLauncherUninstaller()"><i class="ti ti-trash"></i> Désinstaller</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--mut);">⚠️ Permet aux pages MAJIN de demander à Windows de lancer un programme local — à n'installer que sur votre propre PC personnel.</div>
+  </div>
+
   <!-- SERPER SEARCH -->
   <div class="pan" style="margin-bottom:14px;" id="braveSearchPan">
     <div class="pan-title"><i class="ti ti-world-search" style="color:#34a853;"></i><span style="color:#34a853;">Recherche Web — Serper.dev (2 500 req/mois gratuit)</span>
@@ -1823,6 +1841,30 @@ body.dash-editing-media .drag-handle{opacity:1;}
         <button class="btn-ghost" onclick="closeModal('reminderModal')">Annuler</button>
         <button class="btn-sm" onclick="saveReminder()">Sauvegarder</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="localLauncherHelpModal">
+  <div class="modal-box wide">
+    <div class="modal-title"><i class="ti ti-device-desktop" style="color:#f59e0b;margin-right:8px;"></i> Lancer des apps de bureau depuis le navigateur<button class="modal-close" onclick="closeModal('localLauncherHelpModal')">✕</button></div>
+    <div class="info-box g" style="margin-bottom:14px;">
+      <strong style="color:var(--txt);">Pourquoi c'est nécessaire :</strong><br>
+      Un navigateur ne peut pas lancer un programme local pour des raisons de sécurité — c'est volontaire. La version Electron de MAJIN contourne ça avec un pont natif intégré. La version web (Cloudflare) ne peut pas en faire autant... sauf si Windows sait rediriger un lien spécial vers un programme local. C'est exactement ce que fait ce petit installateur : il enregistre un protocole <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin:</code> auprès de Windows, pour votre compte utilisateur uniquement (aucun droit administrateur requis), avec un script qui sait recevoir une demande de MAJIN et lancer l'application correspondante.
+    </div>
+    <div class="info-box g" style="margin-bottom:14px;">
+      <strong style="color:var(--txt);">Installation (une seule fois) :</strong><br>
+      <span style="color:#f59e0b;font-weight:800;">1.</span> Cliquez "Télécharger l'installateur (.bat)" ci-dessus<br>
+      <span style="color:#f59e0b;font-weight:800;">2.</span> Double-cliquez le fichier téléchargé (Windows peut afficher un avertissement SmartScreen pour un .bat inconnu — cliquez "Informations complémentaires" puis "Exécuter quand même")<br>
+      <span style="color:#f59e0b;font-weight:800;">3.</span> Cochez "Lanceur installé sur ce PC" dans Paramètres<br>
+      <span style="color:#f59e0b;font-weight:800;">4.</span> Au premier lancement d'une appli, votre navigateur demandera confirmation ("Ouvrir MAJIN Launcher ?") — c'est normal, cochez "toujours autoriser" si vous ne voulez plus le revoir
+    </div>
+    <div class="info-box g" style="border-color:rgba(226,74,74,0.4);">
+      <strong style="color:var(--r);">⚠️ À savoir avant d'installer :</strong><br>
+      Ce mécanisme permet à n'importe quelle page qui connaît l'adresse <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin:</code> de demander à Windows de lancer un programme local déjà présent sur votre PC — c'est le même principe que les liens Spotify ou Zoom qui ouvrent l'appli installée depuis un navigateur. Le script vérifie que le chemin existe et qu'il s'agit bien d'un exécutable avant de le lancer, mais n'installez ce lanceur que sur votre propre PC personnel. Vous pouvez le retirer à tout moment avec "Désinstaller".
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-ghost" onclick="closeModal('localLauncherHelpModal')">Fermer</button>
     </div>
   </div>
 </div>
@@ -6488,6 +6530,7 @@ window.addEventListener('load',()=>{
   // ── Calendrier
   const si=localStorage.getItem('majin_cal_iframe');if(si){const el=document.getElementById('calIframeUrl');if(el)el.value=si;calIframeUrl=si;}
   const sics=localStorage.getItem('majin_cal_ics');if(sics){const el=document.getElementById('calIcsUrl');if(el)el.value=sics;}
+  const llEl=document.getElementById('localLauncherToggle');if(llEl)llEl.checked=localLauncherConfigured();
   const sm=localStorage.getItem('majin_cal_mode');if(sm){calMode=sm;const sel=document.getElementById('calDisplayMode');if(sel)sel.value=sm;}
   const sg=localStorage.getItem('majin_gmail');if(sg){const el=document.getElementById('gmailAccount');if(el)el.value=sg;}
   restoreHeaders();renderCalView();
@@ -6627,6 +6670,91 @@ function swTab(el,id){
 renderStandbyThemes();renderSavedRssFeeds();}
 }
 
+// ===== LANCEUR LOCAL SANS ELECTRON (protocole majin:) =====
+// Permet à la version web/Cloudflare de demander à Windows de lancer une
+// app locale, via un protocole personnalisé enregistré une seule fois côté
+// PC (HKCU, sans droits administrateur). Voir Paramètres → "Lancer des
+// apps de bureau (sans Electron)" pour l'installateur et les explications.
+// Le script PowerShell exécuté côté Windows est encodé en base64 ci-dessous
+// (-EncodedCommand) : il vérifie que le chemin existe et a une extension
+// exécutable (.exe/.bat/.cmd/.lnk) avant de le lancer.
+const MAJIN_LAUNCHER_PS_B64='JABVAHIAaQA9ACQAYQByAGcAcwBbADAAXQAKAGkAZgAoAC0AbgBvAHQAIAAkAFUAcgBpACkAewBlAHgAaQB0AH0ACgAkAHAAcgBlAGYAaQB4AD0AIgBtAGEAagBpAG4AOgBiADYANAAsACIACgBpAGYAKAAkAFUAcgBpAC4AUwB0AGEAcgB0AHMAVwBpAHQAaAAoACQAcAByAGUAZgBpAHgAKQApAHsACgAkAHAAYQB5AGwAbwBhAGQAPQAkAFUAcgBpAC4AUwB1AGIAcwB0AHIAaQBuAGcAKAAkAHAAcgBlAGYAaQB4AC4ATABlAG4AZwB0AGgAKQAKAHQAcgB5AHsACgAkAGIAeQB0AGUAcwA9AFsAQwBvAG4AdgBlAHIAdABdADoAOgBGAHIAbwBtAEIAYQBzAGUANgA0AFMAdAByAGkAbgBnACgAJABwAGEAeQBsAG8AYQBkACkACgAkAGoAcwBvAG4APQBbAFMAeQBzAHQAZQBtAC4AVABlAHgAdAAuAEUAbgBjAG8AZABpAG4AZwBdADoAOgBVAFQARgA4AC4ARwBlAHQAUwB0AHIAaQBuAGcAKAAkAGIAeQB0AGUAcwApAAoAJABkAGEAdABhAD0AJABqAHMAbwBuAHwAQwBvAG4AdgBlAHIAdABGAHIAbwBtAC0ASgBzAG8AbgAKACQAZQB4AHQAPQBbAFMAeQBzAHQAZQBtAC4ASQBPAC4AUABhAHQAaABdADoAOgBHAGUAdABFAHgAdABlAG4AcwBpAG8AbgAoACQAZABhAHQAYQAuAHAAYQB0AGgAKQAuAFQAbwBMAG8AdwBlAHIAKAApAAoAJABhAGwAbABvAHcAZQBkAD0AQAAoACIALgBlAHgAZQAiACwAIgAuAGIAYQB0ACIALAAiAC4AYwBtAGQAIgAsACIALgBsAG4AawAiACkACgBpAGYAKAAoAFQAZQBzAHQALQBQAGEAdABoACAAJABkAGEAdABhAC4AcABhAHQAaAApACAALQBhAG4AZAAgACgAJABhAGwAbABvAHcAZQBkACAALQBjAG8AbgB0AGEAaQBuAHMAIAAkAGUAeAB0ACkAKQB7AAoAaQBmACgAJABkAGEAdABhAC4AYQByAGcAcwAgAC0AYQBuAGQAIAAkAGQAYQB0AGEALgBhAHIAZwBzAC4AVAByAGkAbQAoACkALgBMAGUAbgBnAHQAaAAgAC0AZwB0ACAAMAApAHsACgBTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGQAYQB0AGEALgBwAGEAdABoACAALQBBAHIAZwB1AG0AZQBuAHQATABpAHMAdAAgACQAZABhAHQAYQAuAGEAcgBnAHMACgB9AGUAbABzAGUAewAKAFMAdABhAHIAdAAtAFAAcgBvAGMAZQBzAHMAIAAtAEYAaQBsAGUAUABhAHQAaAAgACQAZABhAHQAYQAuAHAAYQB0AGgACgB9AAoAfQAKAH0AYwBhAHQAYwBoAHsAfQAKAH0ACgA=';
+
+function localLauncherConfigured(){
+  return localStorage.getItem('majin_local_launcher_configured')==='true';
+}
+function saveLocalLauncherConfigured(){
+  const checked=document.getElementById('localLauncherToggle').checked;
+  localStorage.setItem('majin_local_launcher_configured',checked?'true':'false');
+}
+// Sépare "C:\...\app.exe --args" en {path, args} pour un payload structuré
+// (plus robuste qu'un parsing de chaîne brute côté PowerShell)
+function splitExeAndArgs(str){
+  const m=str.match(/^(.*?\.exe)\s+(.*)$/i);
+  if(m)return {path:m[1].replace(/^"+|"+$/g,''),args:m[2]};
+  return {path:str.replace(/^"+|"+$/g,''),args:''};
+}
+function launchLocalViaProtocol(path,args){
+  const payload=JSON.stringify({path,args:args||''});
+  const b64=btoa(unescape(encodeURIComponent(payload)));
+  window.location.href='majin:b64,'+b64;
+}
+function promptLocalLauncherSetup(url){
+  // Tentative quand même : peut-être déjà installé mais case non cochée
+  const {path,args}=splitExeAndArgs(url);
+  launchLocalViaProtocol(path,args);
+  const modal=document.getElementById('localLauncherHelpModal');
+  if(modal)modal.classList.add('open');
+}
+function downloadTextFile(filename,content){
+  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},150);
+}
+function buildMajinLauncherInstallerBat(){
+  return [
+    '@echo off',
+    'setlocal',
+    '',
+    'reg add "HKCU\\Software\\Classes\\majin" /ve /d "URL:MAJIN Protocol" /f >nul',
+    'reg add "HKCU\\Software\\Classes\\majin" /v "URL Protocol" /d "" /f >nul',
+    'reg add "HKCU\\Software\\Classes\\majin\\shell\\open\\command" /ve /d "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand '+MAJIN_LAUNCHER_PS_B64+' \\"%%1\\"" /f >nul',
+    '',
+    'echo.',
+    'echo ===================================================',
+    'echo  MAJIN - Lanceur applications locales installe',
+    'echo  Vous pouvez fermer cette fenetre et retourner sur',
+    'echo  votre tableau de bord MAJIN.',
+    'echo ===================================================',
+    'echo.',
+    'pause',
+    ''
+  ].join('\r\n');
+}
+function buildMajinLauncherUninstallerBat(){
+  return [
+    '@echo off',
+    'setlocal',
+    '',
+    'reg delete "HKCU\\Software\\Classes\\majin" /f >nul 2>&1',
+    '',
+    'echo.',
+    'echo Lanceur MAJIN desinstalle.',
+    'echo.',
+    'pause',
+    ''
+  ].join('\r\n');
+}
+function downloadLocalLauncherInstaller(){
+  downloadTextFile('installer-majin-launcher.bat',buildMajinLauncherInstallerBat());
+}
+function downloadLocalLauncherUninstaller(){
+  downloadTextFile('desinstaller-majin-launcher.bat',buildMajinLauncherUninstallerBat());
+}
+
 // ===== UTILS =====
 function openUrl(url){
   if(!url)return;
@@ -6647,21 +6775,31 @@ function openUrl(url){
     if(window.majinElectron){
       // Mode Electron : lancer chrome.exe avec les bons arguments
       window.majinElectron.openLocal(url);
+    } else if(localLauncherConfigured()){
+      // Mode web avec lanceur local installé : on relaie chrome.exe + arguments tels quels
+      const {path,args:exeArgs}=splitExeAndArgs(url);
+      launchLocalViaProtocol(path,exeArgs);
     } else if(targetUrl){
-      // Mode navigateur : on ne peut pas forcer le profil Chrome,
+      // Mode navigateur sans lanceur : on ne peut pas forcer le profil Chrome,
       // mais on ouvre l'URL dans un nouvel onglet avec un avertissement si profil demandé
       if(profile){
-        console.info('[MAJIN] Profil Chrome "'+profile+'" ignoré en mode navigateur — ouverture de l\'URL directement.');
+        console.info('[MAJIN] Profil Chrome "'+profile+'" ignoré (lanceur local non configuré — voir Paramètres) — ouverture de l\'URL directement.');
       }
       window.open(targetUrl,'_blank');
     }
     return;
   }
 
-  // ── Chemin local Windows (C:\...) ou UNC (\\...) → Electron uniquement ─────
+  // ── Chemin local Windows (C:\...) ou UNC (\\...) ─────
   if(/^[a-zA-Z]:\\/.test(url)||url.startsWith('\\\\')){
-    if(window.majinElectron){window.majinElectron.openLocal(url);}
-    else{alert('Les chemins locaux nécessitent l\'application bureau MAJIN.');}
+    if(window.majinElectron){
+      window.majinElectron.openLocal(url);
+    } else if(localLauncherConfigured()){
+      const {path,args}=splitExeAndArgs(url);
+      launchLocalViaProtocol(path,args);
+    } else {
+      promptLocalLauncherSetup(url);
+    }
     return;
   }
 
@@ -6708,6 +6846,8 @@ const PREF_KEYS = [
   'majin_brave_auto',
   'majin_standby_auto','majin_standby_delay','majin_standby_sound','majin_standby_theme',
   // NE PAS exporter : majin_api_key, majin_brave_key (sécurité)
+  // NE PAS exporter : majin_local_launcher_configured (propre à chaque PC — l'installateur .bat
+  // n'a été exécuté que sur cette machine, l'importer sur un autre PC donnerait un faux positif)
 ];
 
 function exportPreferences(){
