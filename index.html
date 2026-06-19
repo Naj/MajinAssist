@@ -9,9 +9,9 @@
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#09090b"/>
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png"/>
-<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png"/>
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="MAJIN"/>
@@ -210,6 +210,12 @@ body>*{position:relative;z-index:1;}
 .ev-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ev-sub{font-size:12px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ev-now{border-left:3px solid var(--r);padding-left:8px;animation:calPulse 2s ease-in-out infinite;}
+.note-row{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(226,74,74,0.08);}
+.note-row:last-child{border-bottom:none;}
+.note-text{flex:1;min-width:0;font-size:13px;word-break:break-word;}
+.note-row.done .note-text{color:var(--mut);text-decoration:line-through;}
+.note-del{background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px;padding:2px 6px;flex-shrink:0;opacity:0;transition:opacity .15s;}
+.note-row:hover .note-del{opacity:1;}
 
 /* MÉTÉO */
 .temp-big{font-family:var(--fonthud);font-size:clamp(24px,4vw,40px);font-weight:900;line-height:1;}
@@ -1143,6 +1149,24 @@ body.dash-editing-media .drag-handle{opacity:1;}
         </div>
       </div>
       <div class="wforecast" id="wforecast"></div>
+    </div>
+  </div>
+
+  <!-- NOTES & TÂCHES -->
+  <div class="dash-widget col-4" id="dw-notes" data-wid="notes">
+    <div class="drag-handle" title="Déplacer">⠿</div>
+    <div class="resize-handle"></div>
+    <div class="pan" style="border:none;min-height:200px;display:flex;flex-direction:column;background:transparent;">
+      <div class="pan-title">
+        <i class="ti ti-notes" style="color:var(--ai);"></i>
+        <span class="pan-title-editable" ondblclick="editHeader(this,'hdr_notes')" id="hdr_notes_display">Notes &amp; Tâches</span>
+        <span id="notesCount" style="margin-left:auto;font-size:11px;color:var(--mut);font-weight:700;"></span>
+      </div>
+      <div style="display:flex;gap:6px;margin:6px 0 8px;">
+        <input id="noteInput" placeholder="Ajouter une note ou tâche…" maxlength="200" style="flex:1;min-width:0;background:var(--s2);border:1.5px solid var(--bor);color:var(--txt);padding:8px 12px;font-family:var(--font);font-size:13px;border-radius:8px;outline:none;" onkeydown="if(event.key==='Enter')addNote()"/>
+        <button class="btn-sm" style="padding:0 12px;flex-shrink:0;" onclick="addNote()" title="Ajouter"><i class="ti ti-plus"></i></button>
+      </div>
+      <div id="notesList" style="flex:1;display:flex;flex-direction:column;gap:1px;overflow-y:auto;max-height:240px;"></div>
     </div>
   </div>
 
@@ -4617,6 +4641,64 @@ function deleteReminderFromModal(){
 }
 renderReminders();
 
+// ===== NOTES & TÂCHES (capture rapide, sans API externe) =====
+let notes=JSON.parse(localStorage.getItem('majin_notes')||'[]');
+
+function saveNotesStore(){
+  try{localStorage.setItem('majin_notes',JSON.stringify(notes));}catch{}
+}
+function addNote(){
+  const inp=document.getElementById('noteInput');if(!inp)return;
+  const text=inp.value.trim();if(!text)return;
+  notes.push({id:'note_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text,done:false,createdAt:Date.now()});
+  inp.value='';
+  saveNotesStore();renderNotes();
+  inp.focus();
+}
+function toggleNoteDone(id){
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  n.done=!n.done;
+  saveNotesStore();renderNotes();
+}
+function deleteNote(id){
+  notes=notes.filter(x=>x.id!==id);
+  saveNotesStore();renderNotes();
+}
+function clearCompletedNotes(){
+  if(!notes.some(n=>n.done))return;
+  if(!confirm('Effacer toutes les tâches terminées ?'))return;
+  notes=notes.filter(n=>!n.done);
+  saveNotesStore();renderNotes();
+}
+function renderNotes(){
+  const el=document.getElementById('notesList');if(!el)return;
+  const countEl=document.getElementById('notesCount');
+  const todo=notes.filter(n=>!n.done).sort((a,b)=>a.createdAt-b.createdAt);
+  const done=notes.filter(n=>n.done).sort((a,b)=>b.createdAt-a.createdAt);
+
+  let rows='';
+  todo.forEach(n=>{
+    rows+=`<div class="note-row" data-id="${n.id}">
+      <input type="checkbox" onchange="toggleNoteDone('${n.id}')" style="accent-color:var(--r);width:16px;height:16px;flex-shrink:0;cursor:pointer;"/>
+      <span class="note-text">${icsEscapeHtml(n.text)}</span>
+      <button class="note-del" onclick="deleteNote('${n.id}')" title="Supprimer">✕</button>
+    </div>`;
+  });
+  done.forEach(n=>{
+    rows+=`<div class="note-row done" data-id="${n.id}">
+      <input type="checkbox" checked onchange="toggleNoteDone('${n.id}')" style="accent-color:var(--r);width:16px;height:16px;flex-shrink:0;cursor:pointer;"/>
+      <span class="note-text">${icsEscapeHtml(n.text)}</span>
+      <button class="note-del" onclick="deleteNote('${n.id}')" title="Supprimer">✕</button>
+    </div>`;
+  });
+
+  if(!rows)rows=`<div style="padding:16px;text-align:center;color:var(--mut);font-size:12px;">Rien pour l'instant — ajoutez une note ou une tâche ✏️</div>`;
+  if(done.length)rows+=`<button class="btn-ghost" style="margin-top:6px;font-size:11px;width:100%;" onclick="clearCompletedNotes()"><i class="ti ti-trash"></i> Effacer les ${done.length} terminée${done.length>1?'s':''}</button>`;
+  el.innerHTML=rows;
+  if(countEl)countEl.textContent=todo.length?`${todo.length} en cours`:'';
+}
+renderNotes();
+
 // ===== GROQ AI =====
 function connectAI(){
   const k=document.getElementById('apiKeyInp').value.trim();
@@ -6444,7 +6526,7 @@ const PREF_KEYS = [
   'majin_view_modes',
   'majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
   'majin_cities','majin_weather_src','majin_weather_src_url',
-  'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_gmail',
+  'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_notes','majin_gmail',
   'majin_news_src','majin_news_custom_url','majin_ticker_speed',
   'majin_theme','majin_compact','majin_accent','majin_wallpaper','majin_wp_opacity',
   'majin_tts','majin_tts_voice','majin_tts_rate','majin_tts_pitch','majin_tts_volume',

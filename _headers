@@ -14,5 +14,11 @@
   Cache-Control: no-cache
   Service-Worker-Allowed: /
 
-/icons/*
+/favicon-*.png
+  Cache-Control: public, max-age=604800, immutable
+
+/icon-*.png
+  Cache-Control: public, max-age=604800, immutable
+
+/apple-touch-icon.png
   Cache-Control: public, max-age=604800, immutable
