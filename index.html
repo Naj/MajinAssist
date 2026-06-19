@@ -3075,6 +3075,10 @@ let calIcsUrl=localStorage.getItem('majin_cal_ics')||'';
 let calIcsEvents=null;      // événements parsés en mémoire (cache de session)
 let calIcsLoading=false;
 let calIcsError='';
+let reminders=JSON.parse(localStorage.getItem('majin_reminders')||'[]');
+let remindersEditMode=false;
+let editingReminderId=null;
+let notes=JSON.parse(localStorage.getItem('majin_notes')||'[]');
 let connected=false,chatHistory=[],speaking=false,recognition=null,wt=0;
 let editModes={perso:false,'perso-sante':false,'perso-services':false,'perso-reseaux':false,'perso-ecommerce':false,'perso-sport':false,m365:false,collab:false,transport:false,plex:false,spotify:false,ia:false};
 let editingList=null,editingIdx=null;
@@ -4537,9 +4541,7 @@ updateTabBadge();
 // ===== RAPPELS & ANNIVERSAIRES =====
 // Réutilise le même moteur de récurrence que l'agenda ICS (icsExpandEvent) :
 // un anniversaire est juste un événement "toute la journée" avec RRULE:FREQ=YEARLY.
-let reminders=JSON.parse(localStorage.getItem('majin_reminders')||'[]');
-let remindersEditMode=false;
-let editingReminderId=null;
+// (état déclaré tout en haut du script, voir let reminders=... près de calIcsError)
 
 function saveRemindersStore(){
   try{localStorage.setItem('majin_reminders',JSON.stringify(reminders));}catch{}
@@ -4642,7 +4644,7 @@ function deleteReminderFromModal(){
 renderReminders();
 
 // ===== NOTES & TÂCHES (capture rapide, sans API externe) =====
-let notes=JSON.parse(localStorage.getItem('majin_notes')||'[]');
+// (état déclaré tout en haut du script, voir let notes=... près de calIcsError)
 
 function saveNotesStore(){
   try{localStorage.setItem('majin_notes',JSON.stringify(notes));}catch{}
