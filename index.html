@@ -1854,8 +1854,8 @@ body.dash-editing-media .drag-handle{opacity:1;}
     </div>
     <div class="info-box g" style="margin-bottom:14px;">
       <strong style="color:var(--txt);">Installation (une seule fois) :</strong><br>
-      <span style="color:#f59e0b;font-weight:800;">1.</span> Cliquez "Télécharger l'installateur (.bat)" ci-dessus<br>
-      <span style="color:#f59e0b;font-weight:800;">2.</span> Double-cliquez le fichier téléchargé (Windows peut afficher un avertissement SmartScreen pour un .bat inconnu — cliquez "Informations complémentaires" puis "Exécuter quand même")<br>
+      <span style="color:#f59e0b;font-weight:800;">1.</span> Cliquez "Télécharger l'installateur (.bat)" ci-dessus — deux fichiers se téléchargent (<code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin-launcher.ps1</code> et <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">installer-majin-launcher.bat</code>), gardez-les dans le même dossier (votre dossier Téléchargements par défaut)<br>
+      <span style="color:#f59e0b;font-weight:800;">2.</span> Double-cliquez <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">installer-majin-launcher.bat</code> (Windows peut afficher un avertissement SmartScreen pour un .bat inconnu — "Informations complémentaires" puis "Exécuter quand même")<br>
       <span style="color:#f59e0b;font-weight:800;">3.</span> Cochez "Lanceur installé sur ce PC" dans Paramètres<br>
       <span style="color:#f59e0b;font-weight:800;">4.</span> Au premier lancement d'une appli, votre navigateur demandera confirmation ("Ouvrir MAJIN Launcher ?") — c'est normal, cochez "toujours autoriser" si vous ne voulez plus le revoir
     </div>
@@ -6675,10 +6675,11 @@ renderStandbyThemes();renderSavedRssFeeds();}
 // app locale, via un protocole personnalisé enregistré une seule fois côté
 // PC (HKCU, sans droits administrateur). Voir Paramètres → "Lancer des
 // apps de bureau (sans Electron)" pour l'installateur et les explications.
-// Le script PowerShell exécuté côté Windows est encodé en base64 ci-dessous
-// (-EncodedCommand) : il vérifie que le chemin existe et a une extension
-// exécutable (.exe/.bat/.cmd/.lnk) avant de le lancer.
-const MAJIN_LAUNCHER_PS_B64='JABVAHIAaQA9ACQAYQByAGcAcwBbADAAXQAKAGkAZgAoAC0AbgBvAHQAIAAkAFUAcgBpACkAewBlAHgAaQB0AH0ACgAkAHAAcgBlAGYAaQB4AD0AIgBtAGEAagBpAG4AOgBiADYANAAsACIACgBpAGYAKAAkAFUAcgBpAC4AUwB0AGEAcgB0AHMAVwBpAHQAaAAoACQAcAByAGUAZgBpAHgAKQApAHsACgAkAHAAYQB5AGwAbwBhAGQAPQAkAFUAcgBpAC4AUwB1AGIAcwB0AHIAaQBuAGcAKAAkAHAAcgBlAGYAaQB4AC4ATABlAG4AZwB0AGgAKQAKAHQAcgB5AHsACgAkAGIAeQB0AGUAcwA9AFsAQwBvAG4AdgBlAHIAdABdADoAOgBGAHIAbwBtAEIAYQBzAGUANgA0AFMAdAByAGkAbgBnACgAJABwAGEAeQBsAG8AYQBkACkACgAkAGoAcwBvAG4APQBbAFMAeQBzAHQAZQBtAC4AVABlAHgAdAAuAEUAbgBjAG8AZABpAG4AZwBdADoAOgBVAFQARgA4AC4ARwBlAHQAUwB0AHIAaQBuAGcAKAAkAGIAeQB0AGUAcwApAAoAJABkAGEAdABhAD0AJABqAHMAbwBuAHwAQwBvAG4AdgBlAHIAdABGAHIAbwBtAC0ASgBzAG8AbgAKACQAZQB4AHQAPQBbAFMAeQBzAHQAZQBtAC4ASQBPAC4AUABhAHQAaABdADoAOgBHAGUAdABFAHgAdABlAG4AcwBpAG8AbgAoACQAZABhAHQAYQAuAHAAYQB0AGgAKQAuAFQAbwBMAG8AdwBlAHIAKAApAAoAJABhAGwAbABvAHcAZQBkAD0AQAAoACIALgBlAHgAZQAiACwAIgAuAGIAYQB0ACIALAAiAC4AYwBtAGQAIgAsACIALgBsAG4AawAiACkACgBpAGYAKAAoAFQAZQBzAHQALQBQAGEAdABoACAAJABkAGEAdABhAC4AcABhAHQAaAApACAALQBhAG4AZAAgACgAJABhAGwAbABvAHcAZQBkACAALQBjAG8AbgB0AGEAaQBuAHMAIAAkAGUAeAB0ACkAKQB7AAoAaQBmACgAJABkAGEAdABhAC4AYQByAGcAcwAgAC0AYQBuAGQAIAAkAGQAYQB0AGEALgBhAHIAZwBzAC4AVAByAGkAbQAoACkALgBMAGUAbgBnAHQAaAAgAC0AZwB0ACAAMAApAHsACgBTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGQAYQB0AGEALgBwAGEAdABoACAALQBBAHIAZwB1AG0AZQBuAHQATABpAHMAdAAgACQAZABhAHQAYQAuAGEAcgBnAHMACgB9AGUAbABzAGUAewAKAFMAdABhAHIAdAAtAFAAcgBvAGMAZQBzAHMAIAAtAEYAaQBsAGUAUABhAHQAaAAgACQAZABhAHQAYQAuAHAAYQB0AGgACgB9AAoAfQAKAH0AYwBhAHQAYwBoAHsAfQAKAH0ACgA=';
+// Le script PowerShell est généré en clair (PAS de -EncodedCommand, PAS de
+// -WindowStyle Hidden) : cette combinaison est une signature classique de
+// dropper malveillant que beaucoup d'antivirus bloquent par heuristique,
+// même hors de toute intention malveillante. Un script lisible + invoqué
+// via -File passe la détection sans poser de vrai compromis de sécurité.
 
 function localLauncherConfigured(){
   return localStorage.getItem('majin_local_launcher_configured')==='true';
@@ -6714,21 +6715,69 @@ function downloadTextFile(filename,content){
   document.body.appendChild(a);a.click();
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},150);
 }
+// Script PowerShell lisible (aucune obfuscation) — reçoit l'URI majin:b64,...
+// en paramètre, vérifie que le chemin existe et a une extension exécutable
+// connue avant de lancer le programme.
+function buildMajinLauncherPs1(){
+  return [
+    'param([string]$Uri)',
+    'if (-not $Uri) { exit }',
+    '',
+    '$prefix = "majin:b64,"',
+    'if ($Uri.StartsWith($prefix)) {',
+    '    $payload = $Uri.Substring($prefix.Length)',
+    '    try {',
+    '        $bytes = [Convert]::FromBase64String($payload)',
+    '        $json = [System.Text.Encoding]::UTF8.GetString($bytes)',
+    '        $data = $json | ConvertFrom-Json',
+    '',
+    '        $ext = [System.IO.Path]::GetExtension($data.path).ToLower()',
+    '        $allowed = @(".exe", ".bat", ".cmd", ".lnk")',
+    '',
+    '        if ((Test-Path $data.path) -and ($allowed -contains $ext)) {',
+    '            if ($data.args -and $data.args.Trim().Length -gt 0) {',
+    '                Start-Process -FilePath $data.path -ArgumentList $data.args',
+    '            } else {',
+    '                Start-Process -FilePath $data.path',
+    '            }',
+    '        }',
+    '    } catch {',
+    '        # Payload malforme : on ignore silencieusement',
+    '    }',
+    '}',
+    ''
+  ].join('\r\n');
+}
+// L'installateur s'attend à trouver majin-launcher.ps1 à côté de lui
+// (même dossier de téléchargement) ; il le copie vers un emplacement stable
+// puis enregistre le protocole pour qu'il survive même si le fichier
+// d'origine est déplacé ou supprimé ensuite.
 function buildMajinLauncherInstallerBat(){
   return [
     '@echo off',
     'setlocal',
     '',
+    'set "SRC=%~dp0majin-launcher.ps1"',
+    'set "DEST_DIR=%LOCALAPPDATA%\\MAJIN"',
+    'set "DEST=%DEST_DIR%\\majin-launcher.ps1"',
+    '',
+    'if not exist "%SRC%" (',
+    '  echo ERREUR : majin-launcher.ps1 introuvable a cote de ce fichier .bat',
+    '  echo Telechargez les deux fichiers dans le meme dossier puis relancez ce .bat.',
+    '  pause',
+    '  exit /b 1',
+    ')',
+    '',
+    'if not exist "%DEST_DIR%" mkdir "%DEST_DIR%"',
+    'copy /y "%SRC%" "%DEST%" >nul',
+    '',
     'reg add "HKCU\\Software\\Classes\\majin" /ve /d "URL:MAJIN Protocol" /f >nul',
     'reg add "HKCU\\Software\\Classes\\majin" /v "URL Protocol" /d "" /f >nul',
-    'reg add "HKCU\\Software\\Classes\\majin\\shell\\open\\command" /ve /d "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand '+MAJIN_LAUNCHER_PS_B64+' \\"%%1\\"" /f >nul',
+    'reg add "HKCU\\Software\\Classes\\majin\\shell\\open\\command" /ve /d "powershell.exe -ExecutionPolicy Bypass -File \\"%DEST%\\" \\"%%1\\"" /f >nul',
     '',
     'echo.',
-    'echo ===================================================',
-    'echo  MAJIN - Lanceur applications locales installe',
-    'echo  Vous pouvez fermer cette fenetre et retourner sur',
-    'echo  votre tableau de bord MAJIN.',
-    'echo ===================================================',
+    'echo MAJIN - Lanceur installe avec succes.',
+    'echo Script copie vers : %DEST%',
     'echo.',
     'pause',
     ''
@@ -6740,6 +6789,7 @@ function buildMajinLauncherUninstallerBat(){
     'setlocal',
     '',
     'reg delete "HKCU\\Software\\Classes\\majin" /f >nul 2>&1',
+    'if exist "%LOCALAPPDATA%\\MAJIN\\majin-launcher.ps1" del /q "%LOCALAPPDATA%\\MAJIN\\majin-launcher.ps1"',
     '',
     'echo.',
     'echo Lanceur MAJIN desinstalle.',
@@ -6749,11 +6799,15 @@ function buildMajinLauncherUninstallerBat(){
   ].join('\r\n');
 }
 function downloadLocalLauncherInstaller(){
-  downloadTextFile('installer-majin-launcher.bat',buildMajinLauncherInstallerBat());
+  // Deux fichiers nécessaires, dans le même dossier : le script (.ps1) et
+  // l'installateur (.bat) qui le copie et enregistre le protocole.
+  downloadTextFile('majin-launcher.ps1',buildMajinLauncherPs1());
+  setTimeout(()=>downloadTextFile('installer-majin-launcher.bat',buildMajinLauncherInstallerBat()),200);
 }
 function downloadLocalLauncherUninstaller(){
   downloadTextFile('desinstaller-majin-launcher.bat',buildMajinLauncherUninstallerBat());
 }
+
 
 // ===== UTILS =====
 function openUrl(url){
