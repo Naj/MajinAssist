@@ -1524,20 +1524,22 @@ body.dash-editing-media .drag-handle{opacity:1;}
 
   <!-- LANCEUR LOCAL SANS ELECTRON -->
   <div class="pan" style="margin-bottom:14px;" id="localLauncherPan">
-    <div class="pan-title"><i class="ti ti-device-desktop" style="color:#f59e0b;"></i><span style="color:#f59e0b;">Lancer des apps de bureau (sans Electron)</span>
+    <div class="pan-title"><i class="ti ti-device-desktop" style="color:#f59e0b;"></i><span style="color:#f59e0b;">Apps de bureau (sans Electron)</span>
       <button class="btn-ghost" style="margin-left:auto;font-size:11px;padding:3px 10px;" onclick="document.getElementById('localLauncherHelpModal').classList.add('open')">
         <i class="ti ti-help-circle" style="color:#f59e0b;"></i> Comment ça marche ?
       </button>
     </div>
-    <div class="setting-row">
-      <div class="setting-lbl">Lanceur installé sur ce PC :</div>
+    <div id="desktopAppsList" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-ghost" style="font-size:12px;" onclick="openDesktopAppModal(null)"><i class="ti ti-plus"></i> Ajouter une appli</button>
+      <button class="btn-sm" style="background:#f59e0b;" onclick="downloadLocalLauncherInstaller()"><i class="ti ti-download"></i> Télécharger l'installateur (.bat)</button>
+      <button class="btn-ghost" style="font-size:12px;" onclick="downloadLocalLauncherUninstaller()"><i class="ti ti-trash"></i> Tout désinstaller</button>
+    </div>
+    <div class="setting-row" style="margin-top:10px;">
+      <div class="setting-lbl">Installateur exécuté sur ce PC :</div>
       <input type="checkbox" id="localLauncherToggle" style="accent-color:#f59e0b;width:16px;height:16px;" onchange="saveLocalLauncherConfigured()"/>
     </div>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-sm" style="background:#f59e0b;" onclick="downloadLocalLauncherInstaller()"><i class="ti ti-download"></i> Télécharger l'installateur (.bat)</button>
-      <button class="btn-ghost" style="font-size:12px;" onclick="downloadLocalLauncherUninstaller()"><i class="ti ti-trash"></i> Désinstaller</button>
-    </div>
-    <div style="margin-top:8px;font-size:11px;color:var(--mut);">⚠️ Permet aux pages MAJIN de demander à Windows de lancer un programme local — à n'installer que sur votre propre PC personnel.</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--mut);">Chaque appli déclarée obtient son propre protocole figé (aucun paramètre transmis depuis le navigateur) — relancez l'installateur après chaque ajout/modification.</div>
   </div>
 
   <!-- SERPER SEARCH -->
@@ -1845,23 +1847,42 @@ body.dash-editing-media .drag-handle{opacity:1;}
   </div>
 </div>
 
+<div class="modal" id="desktopAppModal">
+  <div class="modal-box">
+    <div class="modal-title" id="desktopAppModalTitle">🖥️ Nouvelle appli de bureau<button class="modal-close" onclick="closeModal('desktopAppModal')">✕</button></div>
+    <div class="field"><label>Nom</label><input id="desktopAppName" placeholder="Ex : Word"/></div>
+    <div class="field"><label>Commande complète</label><input id="desktopAppCommand" placeholder="C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE"/></div>
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:6px;align-items:center;">
+      <button class="btn-sm" id="desktopAppDeleteBtn" onclick="deleteDesktopApp(editingDesktopAppId);closeModal('desktopAppModal')" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid rgba(220,38,38,0.4);display:none;">
+        <i class="ti ti-trash"></i> Supprimer
+      </button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="btn-ghost" onclick="closeModal('desktopAppModal')">Annuler</button>
+        <button class="btn-sm" onclick="saveDesktopApp()">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="localLauncherHelpModal">
   <div class="modal-box wide">
     <div class="modal-title"><i class="ti ti-device-desktop" style="color:#f59e0b;margin-right:8px;"></i> Lancer des apps de bureau depuis le navigateur<button class="modal-close" onclick="closeModal('localLauncherHelpModal')">✕</button></div>
     <div class="info-box g" style="margin-bottom:14px;">
       <strong style="color:var(--txt);">Pourquoi c'est nécessaire :</strong><br>
-      Un navigateur ne peut pas lancer un programme local pour des raisons de sécurité — c'est volontaire. La version Electron de MAJIN contourne ça avec un pont natif intégré. La version web (Cloudflare) ne peut pas en faire autant... sauf si Windows sait rediriger un lien spécial vers un programme local. C'est exactement ce que fait ce petit installateur : il enregistre un protocole <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin:</code> auprès de Windows, pour votre compte utilisateur uniquement (aucun droit administrateur requis), avec un script qui sait recevoir une demande de MAJIN et lancer l'application correspondante.
+      Un navigateur ne peut pas lancer un programme local pour des raisons de sécurité — c'est volontaire. La version Electron de MAJIN contourne ça avec un pont natif intégré. La version web (Cloudflare) ne peut pas en faire autant... sauf si Windows sait rediriger un lien spécial vers un programme local. Chaque appli que vous déclarez ci-dessus obtient <strong style="color:var(--txt);">son propre protocole dédié</strong> (ex. <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin-xyz123:</code>), avec une commande figée à l'installation — exactement comme les liens <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">spotify:</code> ou <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">zoommtg:</code> qui n'ouvrent jamais que leur propre appli. La page web ne transmet aucune donnée au moment du lancement, le protocole ne fait qu'exécuter la commande déjà enregistrée.
     </div>
     <div class="info-box g" style="margin-bottom:14px;">
-      <strong style="color:var(--txt);">Installation (une seule fois) :</strong><br>
-      <span style="color:#f59e0b;font-weight:800;">1.</span> Cliquez "Télécharger l'installateur (.bat)" ci-dessus — deux fichiers se téléchargent (<code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin-launcher.ps1</code> et <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">installer-majin-launcher.bat</code>), gardez-les dans le même dossier (votre dossier Téléchargements par défaut)<br>
-      <span style="color:#f59e0b;font-weight:800;">2.</span> Double-cliquez <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">installer-majin-launcher.bat</code> (Windows peut afficher un avertissement SmartScreen pour un .bat inconnu — "Informations complémentaires" puis "Exécuter quand même")<br>
-      <span style="color:#f59e0b;font-weight:800;">3.</span> Cochez "Lanceur installé sur ce PC" dans Paramètres<br>
-      <span style="color:#f59e0b;font-weight:800;">4.</span> Au premier lancement d'une appli, votre navigateur demandera confirmation ("Ouvrir MAJIN Launcher ?") — c'est normal, cochez "toujours autoriser" si vous ne voulez plus le revoir
+      <strong style="color:var(--txt);">Installation :</strong><br>
+      <span style="color:#f59e0b;font-weight:800;">1.</span> Ajoutez chaque appli voulue avec "Ajouter une appli" (nom + commande complète, ex. le chemin du .exe)<br>
+      <span style="color:#f59e0b;font-weight:800;">2.</span> Cliquez "Télécharger l'installateur (.bat)" — il contient un protocole par appli déclarée<br>
+      <span style="color:#f59e0b;font-weight:800;">3.</span> Double-cliquez le fichier téléchargé (Windows peut afficher un avertissement SmartScreen pour un .bat inconnu — "Informations complémentaires" puis "Exécuter quand même")<br>
+      <span style="color:#f59e0b;font-weight:800;">4.</span> Cochez "Installateur exécuté sur ce PC" dans Paramètres<br>
+      <span style="color:#f59e0b;font-weight:800;">5.</span> Au premier lancement de chaque appli, votre navigateur demandera une confirmation ponctuelle — normal, cochez "toujours autoriser" pour ne plus la revoir<br>
+      <span style="color:#f59e0b;font-weight:800;">6.</span> Si vous ajoutez ou modifiez une appli plus tard, retéléchargez et relancez l'installateur pour mettre à jour les protocoles
     </div>
-    <div class="info-box g" style="border-color:rgba(226,74,74,0.4);">
-      <strong style="color:var(--r);">⚠️ À savoir avant d'installer :</strong><br>
-      Ce mécanisme permet à n'importe quelle page qui connaît l'adresse <code style="background:rgba(0,0,0,.3);padding:1px 6px;border-radius:4px;">majin:</code> de demander à Windows de lancer un programme local déjà présent sur votre PC — c'est le même principe que les liens Spotify ou Zoom qui ouvrent l'appli installée depuis un navigateur. Le script vérifie que le chemin existe et qu'il s'agit bien d'un exécutable avant de le lancer, mais n'installez ce lanceur que sur votre propre PC personnel. Vous pouvez le retirer à tout moment avec "Désinstaller".
+    <div class="info-box g" style="border-color:rgba(52,168,83,0.4);">
+      <strong style="color:#34a853;">✅ Plus sûr que l'ancienne version :</strong><br>
+      Aucun PowerShell n'est impliqué, aucune donnée n'est décodée à l'exécution — chaque protocole exécute une commande unique et fixe, choisie par vous au moment de l'installation. La page web ne peut déclencher que les applis que vous avez explicitement déclarées, rien d'autre. Vous pouvez retirer un protocole à tout moment avec "Tout désinstaller".
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn-ghost" onclick="closeModal('localLauncherHelpModal')">Fermer</button>
@@ -6531,6 +6552,7 @@ window.addEventListener('load',()=>{
   const si=localStorage.getItem('majin_cal_iframe');if(si){const el=document.getElementById('calIframeUrl');if(el)el.value=si;calIframeUrl=si;}
   const sics=localStorage.getItem('majin_cal_ics');if(sics){const el=document.getElementById('calIcsUrl');if(el)el.value=sics;}
   const llEl=document.getElementById('localLauncherToggle');if(llEl)llEl.checked=localLauncherConfigured();
+  renderLocalDesktopApps();
   const sm=localStorage.getItem('majin_cal_mode');if(sm){calMode=sm;const sel=document.getElementById('calDisplayMode');if(sel)sel.value=sm;}
   const sg=localStorage.getItem('majin_gmail');if(sg){const el=document.getElementById('gmailAccount');if(el)el.value=sg;}
   restoreHeaders();renderCalView();
@@ -6667,45 +6689,48 @@ function swTab(el,id){
   if(debMedia)debMedia.style.display=id==='media'?'flex':'none';
   if(id==='media'){renderMedia();renderMediaCustomPanels();}
   if(id==='cfg'){renderCitySettingsList();
-renderStandbyThemes();renderSavedRssFeeds();}
+renderStandbyThemes();renderSavedRssFeeds();renderLocalDesktopApps();}
 }
 
-// ===== LANCEUR LOCAL SANS ELECTRON (protocole majin:) =====
-// Permet à la version web/Cloudflare de demander à Windows de lancer une
-// app locale, via un protocole personnalisé enregistré une seule fois côté
-// PC (HKCU, sans droits administrateur). Voir Paramètres → "Lancer des
-// apps de bureau (sans Electron)" pour l'installateur et les explications.
-// Le script PowerShell est généré en clair (PAS de -EncodedCommand, PAS de
-// -WindowStyle Hidden) : cette combinaison est une signature classique de
-// dropper malveillant que beaucoup d'antivirus bloquent par heuristique,
-// même hors de toute intention malveillante. Un script lisible + invoqué
-// via -File passe la détection sans poser de vrai compromis de sécurité.
+// ===== LANCEUR LOCAL SANS ELECTRON (protocoles dédiés par appli) =====
+// Chaque appli locale déclarée obtient SON PROPRE protocole Windows
+// (majin-<id>:), dont la commande est figée au moment de l'installation —
+// rien n'est transmis depuis la page web au moment du lancement, le
+// protocole n'accepte aucun paramètre. Ça élimine complètement le schéma
+// "page web → exécution de commande arbitraire" qui faisait détecter la
+// version précédente comme une technique d'attaque (abus de gestionnaire
+// de protocole, MITRE ATT&CK T1546.001) — il n'y a plus ni PowerShell, ni
+// payload, ni décodage : juste un protocole = une commande fixe, exactement
+// comme spotify: ou zoommtg: qui ne lancent jamais que leur propre appli.
+let localDesktopApps=JSON.parse(localStorage.getItem('majin_local_desktop_apps')||'[]');
+let editingDesktopAppId=null;
 
-function localLauncherConfigured(){
-  return localStorage.getItem('majin_local_launcher_configured')==='true';
+function saveDesktopAppsStore(){
+  try{localStorage.setItem('majin_local_desktop_apps',JSON.stringify(localDesktopApps));}catch{}
 }
-function saveLocalLauncherConfigured(){
-  const checked=document.getElementById('localLauncherToggle').checked;
-  localStorage.setItem('majin_local_launcher_configured',checked?'true':'false');
+function desktopAppProtocol(id){
+  return 'majin-'+id;
 }
-// Sépare "C:\...\app.exe --args" en {path, args} pour un payload structuré
-// (plus robuste qu'un parsing de chaîne brute côté PowerShell)
+// Sépare "C:\...\app.exe --args" en {path, args} pour pouvoir reconstruire
+// une valeur de registre correctement guillemetée (le .exe est quoté, pas
+// les arguments qui peuvent déjà contenir leurs propres guillemets)
 function splitExeAndArgs(str){
   const m=str.match(/^(.*?\.exe)\s+(.*)$/i);
   if(m)return {path:m[1].replace(/^"+|"+$/g,''),args:m[2]};
   return {path:str.replace(/^"+|"+$/g,''),args:''};
 }
-function launchLocalViaProtocol(path,args){
-  const payload=JSON.stringify({path,args:args||''});
-  const b64=btoa(unescape(encodeURIComponent(payload)));
-  window.location.href='majin:b64,'+b64;
+function buildRegistryCommandValue(fullCommand){
+  const {path,args}=splitExeAndArgs(fullCommand);
+  const quotedPath='"'+path+'"';
+  return args?quotedPath+' '+args:quotedPath;
 }
-function promptLocalLauncherSetup(url){
-  // Tentative quand même : peut-être déjà installé mais case non cochée
-  const {path,args}=splitExeAndArgs(url);
-  launchLocalViaProtocol(path,args);
-  const modal=document.getElementById('localLauncherHelpModal');
-  if(modal)modal.classList.add('open');
+function escapeForRegAddValue(value){
+  return value.replace(/"/g,'\\"');
+}
+// Retrouve une appli locale déjà déclarée à partir de sa commande exacte
+// (utilisé par openUrl pour savoir vers quel protocole rediriger)
+function findDesktopAppForCommand(cmd){
+  return localDesktopApps.find(a=>a.command===cmd)||null;
 }
 function downloadTextFile(filename,content){
   const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
@@ -6715,98 +6740,120 @@ function downloadTextFile(filename,content){
   document.body.appendChild(a);a.click();
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},150);
 }
-// Script PowerShell lisible (aucune obfuscation) — reçoit l'URI majin:b64,...
-// en paramètre, vérifie que le chemin existe et a une extension exécutable
-// connue avant de lancer le programme.
-function buildMajinLauncherPs1(){
-  return [
-    'param([string]$Uri)',
-    'if (-not $Uri) { exit }',
-    '',
-    '$prefix = "majin:b64,"',
-    'if ($Uri.StartsWith($prefix)) {',
-    '    $payload = $Uri.Substring($prefix.Length)',
-    '    try {',
-    '        $bytes = [Convert]::FromBase64String($payload)',
-    '        $json = [System.Text.Encoding]::UTF8.GetString($bytes)',
-    '        $data = $json | ConvertFrom-Json',
-    '',
-    '        $ext = [System.IO.Path]::GetExtension($data.path).ToLower()',
-    '        $allowed = @(".exe", ".bat", ".cmd", ".lnk")',
-    '',
-    '        if ((Test-Path $data.path) -and ($allowed -contains $ext)) {',
-    '            if ($data.args -and $data.args.Trim().Length -gt 0) {',
-    '                Start-Process -FilePath $data.path -ArgumentList $data.args',
-    '            } else {',
-    '                Start-Process -FilePath $data.path',
-    '            }',
-    '        }',
-    '    } catch {',
-    '        # Payload malforme : on ignore silencieusement',
-    '    }',
-    '}',
-    ''
-  ].join('\r\n');
+
+// --- UI : liste des apps de bureau déclarées ---
+function renderLocalDesktopApps(){
+  const el=document.getElementById('desktopAppsList');if(!el)return;
+  if(!localDesktopApps.length){
+    el.innerHTML='<div style="padding:12px;text-align:center;color:var(--mut);font-size:12px;">Aucune appli déclarée pour l\'instant.</div>';
+    return;
+  }
+  el.innerHTML=localDesktopApps.map(a=>`
+    <div class="ev" style="cursor:pointer;" onclick="openDesktopAppModal('${a.id}')">
+      <div class="ev-time" style="min-width:34px;"><i class="ti ti-app-window"></i></div>
+      <div style="flex:1;min-width:0;"><div class="ev-name">${icsEscapeHtml(a.name)}</div><div class="ev-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${icsEscapeHtml(a.command)}</div></div>
+      <button onclick="event.stopPropagation();deleteDesktopApp('${a.id}')" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0;" title="Supprimer">✕</button>
+    </div>`).join('');
 }
-// L'installateur s'attend à trouver majin-launcher.ps1 à côté de lui
-// (même dossier de téléchargement) ; il le copie vers un emplacement stable
-// puis enregistre le protocole pour qu'il survive même si le fichier
-// d'origine est déplacé ou supprimé ensuite.
-function buildMajinLauncherInstallerBat(){
-  return [
-    '@echo off',
-    'setlocal',
-    '',
-    'set "SRC=%~dp0majin-launcher.ps1"',
-    'set "DEST_DIR=%LOCALAPPDATA%\\MAJIN"',
-    'set "DEST=%DEST_DIR%\\majin-launcher.ps1"',
-    '',
-    'if not exist "%SRC%" (',
-    '  echo ERREUR : majin-launcher.ps1 introuvable a cote de ce fichier .bat',
-    '  echo Telechargez les deux fichiers dans le meme dossier puis relancez ce .bat.',
-    '  pause',
-    '  exit /b 1',
-    ')',
-    '',
-    'if not exist "%DEST_DIR%" mkdir "%DEST_DIR%"',
-    'copy /y "%SRC%" "%DEST%" >nul',
-    '',
-    'reg add "HKCU\\Software\\Classes\\majin" /ve /d "URL:MAJIN Protocol" /f >nul',
-    'reg add "HKCU\\Software\\Classes\\majin" /v "URL Protocol" /d "" /f >nul',
-    'reg add "HKCU\\Software\\Classes\\majin\\shell\\open\\command" /ve /d "powershell.exe -ExecutionPolicy Bypass -File \\"%DEST%\\" \\"%%1\\"" /f >nul',
-    '',
-    'echo.',
-    'echo MAJIN - Lanceur installe avec succes.',
-    'echo Script copie vers : %DEST%',
-    'echo.',
-    'pause',
-    ''
-  ].join('\r\n');
+function openDesktopAppModal(id){
+  editingDesktopAppId=id;
+  const titleEl=document.getElementById('desktopAppModalTitle');
+  const delBtn=document.getElementById('desktopAppDeleteBtn');
+  if(id){
+    const a=localDesktopApps.find(x=>x.id===id);if(!a)return;
+    document.getElementById('desktopAppName').value=a.name;
+    document.getElementById('desktopAppCommand').value=a.command;
+    if(titleEl)titleEl.innerHTML='✏️ Modifier l\'appli<button class="modal-close" onclick="closeModal(\'desktopAppModal\')">✕</button>';
+    if(delBtn)delBtn.style.display='';
+  } else {
+    document.getElementById('desktopAppName').value='';
+    document.getElementById('desktopAppCommand').value='';
+    if(titleEl)titleEl.innerHTML='🖥️ Nouvelle appli de bureau<button class="modal-close" onclick="closeModal(\'desktopAppModal\')">✕</button>';
+    if(delBtn)delBtn.style.display='none';
+  }
+  document.getElementById('desktopAppModal').classList.add('open');
 }
-function buildMajinLauncherUninstallerBat(){
-  return [
-    '@echo off',
-    'setlocal',
-    '',
-    'reg delete "HKCU\\Software\\Classes\\majin" /f >nul 2>&1',
-    'if exist "%LOCALAPPDATA%\\MAJIN\\majin-launcher.ps1" del /q "%LOCALAPPDATA%\\MAJIN\\majin-launcher.ps1"',
-    '',
-    'echo.',
-    'echo Lanceur MAJIN desinstalle.',
-    'echo.',
-    'pause',
-    ''
-  ].join('\r\n');
+function prefillDesktopAppModal(command){
+  openDesktopAppModal(null);
+  document.getElementById('desktopAppCommand').value=command;
+}
+function saveDesktopApp(){
+  const name=document.getElementById('desktopAppName').value.trim();
+  const command=document.getElementById('desktopAppCommand').value.trim();
+  if(!name||!command)return alert('Nom et commande obligatoires.');
+  if(editingDesktopAppId){
+    const a=localDesktopApps.find(x=>x.id===editingDesktopAppId);
+    if(a){a.name=name;a.command=command;}
+  } else {
+    const id='app'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    localDesktopApps.push({id,name,command});
+  }
+  saveDesktopAppsStore();closeModal('desktopAppModal');renderLocalDesktopApps();
+}
+function deleteDesktopApp(id){
+  if(!confirm('Supprimer cette appli de la liste ? (Pensez à régénérer et relancer l\'installateur ensuite pour retirer le protocole correspondant.)'))return;
+  localDesktopApps=localDesktopApps.filter(x=>x.id!==id);
+  saveDesktopAppsStore();renderLocalDesktopApps();
+}
+
+// --- Génération de l'installateur : un protocole figé par appli déclarée ---
+function buildMajinDesktopInstallerBat(){
+  if(!localDesktopApps.length){
+    return ['@echo off','echo Aucune appli de bureau declaree dans MAJIN. Ajoutez-en au moins une puis retelechargez.','pause',''].join('\r\n');
+  }
+  const lines=['@echo off','setlocal',''];
+  localDesktopApps.forEach(a=>{
+    const proto=desktopAppProtocol(a.id);
+    const cmdValue=escapeForRegAddValue(buildRegistryCommandValue(a.command));
+    lines.push('rem -- '+a.name+' --');
+    lines.push('reg add "HKCU\\Software\\Classes\\'+proto+'" /ve /d "URL:MAJIN - '+a.name.replace(/"/g,'')+'" /f >nul');
+    lines.push('reg add "HKCU\\Software\\Classes\\'+proto+'" /v "URL Protocol" /d "" /f >nul');
+    lines.push('reg add "HKCU\\Software\\Classes\\'+proto+'\\shell\\open\\command" /ve /d "'+cmdValue+'" /f >nul');
+    lines.push('');
+  });
+  lines.push('echo.');
+  lines.push('echo MAJIN - '+localDesktopApps.length+' appli(s) de bureau enregistree(s).');
+  lines.push('echo.');
+  lines.push('pause');
+  lines.push('');
+  return lines.join('\r\n');
+}
+function buildMajinDesktopUninstallerBat(){
+  const lines=['@echo off','setlocal',''];
+  localDesktopApps.forEach(a=>{
+    lines.push('reg delete "HKCU\\Software\\Classes\\'+desktopAppProtocol(a.id)+'" /f >nul 2>&1');
+  });
+  lines.push('');
+  lines.push('echo.');
+  lines.push('echo Protocoles MAJIN desinstalles.');
+  lines.push('echo.');
+  lines.push('pause');
+  lines.push('');
+  return lines.join('\r\n');
 }
 function downloadLocalLauncherInstaller(){
-  // Deux fichiers nécessaires, dans le même dossier : le script (.ps1) et
-  // l'installateur (.bat) qui le copie et enregistre le protocole.
-  downloadTextFile('majin-launcher.ps1',buildMajinLauncherPs1());
-  setTimeout(()=>downloadTextFile('installer-majin-launcher.bat',buildMajinLauncherInstallerBat()),200);
+  if(!localDesktopApps.length){
+    alert('Ajoutez au moins une appli de bureau avant de télécharger l\'installateur.');
+    return;
+  }
+  downloadTextFile('installer-majin-apps.bat',buildMajinDesktopInstallerBat());
 }
 function downloadLocalLauncherUninstaller(){
-  downloadTextFile('desinstaller-majin-launcher.bat',buildMajinLauncherUninstallerBat());
+  if(!localDesktopApps.length){alert('Aucune appli déclarée à désinstaller.');return;}
+  downloadTextFile('desinstaller-majin-apps.bat',buildMajinDesktopUninstallerBat());
 }
+function localLauncherConfigured(){
+  return localStorage.getItem('majin_local_launcher_configured')==='true';
+}
+function saveLocalLauncherConfigured(){
+  const checked=document.getElementById('localLauncherToggle').checked;
+  localStorage.setItem('majin_local_launcher_configured',checked?'true':'false');
+}
+function promptLocalLauncherSetup(url){
+  // Appli pas encore déclarée : on pré-remplit directement le formulaire d'ajout
+  prefillDesktopAppModal(url);
+}
+
 
 
 // ===== UTILS =====
@@ -6825,19 +6872,19 @@ function openUrl(url){
     // Extraire le profil si présent
     const profileMatch = args.match(/--profile-directory=["']?([^"'\s]+)["']?/i);
     const profile = profileMatch ? profileMatch[1] : null;
+    const knownApp = findDesktopAppForCommand(url);
 
     if(window.majinElectron){
       // Mode Electron : lancer chrome.exe avec les bons arguments
       window.majinElectron.openLocal(url);
-    } else if(localLauncherConfigured()){
-      // Mode web avec lanceur local installé : on relaie chrome.exe + arguments tels quels
-      const {path,args:exeArgs}=splitExeAndArgs(url);
-      launchLocalViaProtocol(path,exeArgs);
+    } else if(knownApp){
+      // Mode web, appli déjà déclarée → son protocole dédié et figé
+      window.location.href=desktopAppProtocol(knownApp.id)+':';
     } else if(targetUrl){
-      // Mode navigateur sans lanceur : on ne peut pas forcer le profil Chrome,
-      // mais on ouvre l'URL dans un nouvel onglet avec un avertissement si profil demandé
+      // Pas encore déclarée : on ne peut pas forcer le profil Chrome,
+      // mais on ouvre l'URL dans un nouvel onglet, et on propose l'ajout
       if(profile){
-        console.info('[MAJIN] Profil Chrome "'+profile+'" ignoré (lanceur local non configuré — voir Paramètres) — ouverture de l\'URL directement.');
+        console.info('[MAJIN] Profil Chrome "'+profile+'" ignoré (appli non déclarée — voir Paramètres → Apps de bureau) — ouverture de l\'URL directement.');
       }
       window.open(targetUrl,'_blank');
     }
@@ -6848,11 +6895,13 @@ function openUrl(url){
   if(/^[a-zA-Z]:\\/.test(url)||url.startsWith('\\\\')){
     if(window.majinElectron){
       window.majinElectron.openLocal(url);
-    } else if(localLauncherConfigured()){
-      const {path,args}=splitExeAndArgs(url);
-      launchLocalViaProtocol(path,args);
     } else {
-      promptLocalLauncherSetup(url);
+      const knownApp=findDesktopAppForCommand(url);
+      if(knownApp){
+        window.location.href=desktopAppProtocol(knownApp.id)+':';
+      } else {
+        promptLocalLauncherSetup(url);
+      }
     }
     return;
   }
@@ -6894,6 +6943,7 @@ const PREF_KEYS = [
   'majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
   'majin_cities','majin_weather_src','majin_weather_src_url',
   'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_notes','majin_gmail',
+  'majin_local_desktop_apps',
   'majin_news_src','majin_news_custom_url','majin_ticker_speed',
   'majin_theme','majin_compact','majin_accent','majin_wallpaper','majin_wp_opacity',
   'majin_tts','majin_tts_voice','majin_tts_rate','majin_tts_pitch','majin_tts_volume',
