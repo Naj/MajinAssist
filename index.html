@@ -21,7 +21,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --r:#E24B4A;--rb:rgba(226,75,74,0.18);
+  --r:#E24B4A;--rb:rgba(226,75,74,0.18);--r-rgb:226,75,74;
   --bg:#09090b;--s1:#1a1a20;--s2:#22222a;--s3:#2a2a34;
   --bor:rgba(226,75,74,0.3);--txt:#f0e8e8;--mut:#9a8f8f;
   --ai:#a78bfa;--aib:rgba(167,139,250,0.15);
@@ -985,19 +985,19 @@ body.dash-editing-media .drag-handle{opacity:1;}
 ═══════════════════════════════════════════════════════════════════════ */
 :root{
   --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.05),rgba(255,255,255,0.004) 50%),rgba(15,12,18,0.78);
-  --maj-bd:rgba(226,75,74,0.4);
+  --maj-bd:rgba(var(--r-rgb),0.4);
   --maj-rad:20px;
   --maj-blur:blur(11px) saturate(1.3);
-  --maj-glow:0 0 34px rgba(226,75,74,0.16),0 18px 54px rgba(0,0,0,0.55);
-  --maj-glow-hi:0 0 0 1px rgba(226,75,74,0.5),0 0 46px rgba(226,75,74,0.3),0 24px 60px rgba(0,0,0,0.6);
-  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(226,75,74,0.12),transparent 55%),#060509;
+  --maj-glow:0 0 34px rgba(var(--r-rgb),0.16),0 18px 54px rgba(0,0,0,0.55);
+  --maj-glow-hi:0 0 0 1px rgba(var(--r-rgb),0.5),0 0 46px rgba(var(--r-rgb),0.3),0 24px 60px rgba(0,0,0,0.6);
+  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(var(--r-rgb),0.12),transparent 55%),#060509;
 }
 :root.light{
   --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.95),rgba(255,255,255,0.7)),rgba(252,250,253,0.86);
-  --maj-bd:rgba(226,75,74,0.32);
-  --maj-glow:0 0 30px rgba(226,75,74,0.12),0 18px 48px rgba(120,90,140,0.16);
-  --maj-glow-hi:0 0 0 1px rgba(226,75,74,0.42),0 0 38px rgba(226,75,74,0.2),0 20px 50px rgba(120,90,140,0.2);
-  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(226,75,74,0.1),transparent 52%),#eceaf3;
+  --maj-bd:rgba(var(--r-rgb),0.32);
+  --maj-glow:0 0 30px rgba(var(--r-rgb),0.12),0 18px 48px rgba(120,90,140,0.16);
+  --maj-glow-hi:0 0 0 1px rgba(var(--r-rgb),0.42),0 0 38px rgba(var(--r-rgb),0.2),0 20px 50px rgba(120,90,140,0.2);
+  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(var(--r-rgb),0.1),transparent 52%),#eceaf3;
 }
 
 /* Fond Nexus : aurora + champ d'étoiles + grille subtile, derrière tout le reste */
@@ -1005,11 +1005,12 @@ body{background:var(--maj-bg-grad);}
 .maj-aurora{position:fixed;inset:-25%;z-index:0;pointer-events:none;overflow:hidden;animation:majHue 9s ease-in-out infinite alternate;}
 .maj-aurora,.maj-aurora-blob{animation-play-state:var(--anim-state,running);}
 .maj-aurora-blob{position:absolute;border-radius:50%;filter:blur(72px);}
-.maj-aurora-blob.a1{width:60vw;height:60vw;left:-12%;top:-18%;background:radial-gradient(circle,rgba(226,75,74,0.5),transparent 64%);animation:majAur1 19s ease-in-out infinite;}
+.maj-aurora-blob.a1{width:60vw;height:60vw;left:-12%;top:-18%;background:radial-gradient(circle,rgba(var(--r-rgb),0.5),transparent 64%);animation:majAur1 19s ease-in-out infinite;}
 .maj-aurora-blob.a2{width:54vw;height:54vw;right:-15%;top:8%;background:radial-gradient(circle,rgba(167,139,250,0.38),transparent 66%);filter:blur(82px);animation:majAur2 23s ease-in-out infinite;}
-.maj-aurora-blob.a3{width:46vw;height:46vw;left:30%;bottom:-22%;background:radial-gradient(circle,rgba(226,75,74,0.28),transparent 65%);filter:blur(76px);animation:majAur3 27s ease-in-out infinite;}
+.maj-aurora-blob.a3{width:46vw;height:46vw;left:30%;bottom:-22%;background:radial-gradient(circle,rgba(var(--r-rgb),0.28),transparent 65%);filter:blur(76px);animation:majAur3 27s ease-in-out infinite;}
 .maj-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.maj-gridlayer{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(226,75,74,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(226,75,74,0.045) 1px,transparent 1px);background-size:46px 46px;}
+.maj-wallpaper-fx{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.18;transition:opacity .5s;}
+.maj-gridlayer{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(var(--r-rgb),0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--r-rgb),0.045) 1px,transparent 1px);background-size:46px 46px;}
 :root.light .maj-gridlayer{background-image:linear-gradient(rgba(140,90,160,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(140,90,160,0.05) 1px,transparent 1px);}
 @keyframes majAur1{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(18vw,12vh) scale(1.25);}66%{transform:translate(-10vw,22vh) scale(.9);}}
 @keyframes majAur2{0%,100%{transform:translate(0,0) scale(1.1);}40%{transform:translate(-22vw,16vh) scale(.85);}75%{transform:translate(14vw,-10vh) scale(1.3);}}
@@ -1053,9 +1054,10 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 /* Modales, vignettes, jours météo — même langage visuel, coins plus doux */
 .modal-box{background:var(--maj-panel)!important;border-color:var(--maj-bd)!important;border-radius:var(--maj-rad);box-shadow:var(--maj-glow);backdrop-filter:var(--maj-blur);-webkit-backdrop-filter:var(--maj-blur);}
 .tile,.app-row,.wfday,.cal-shell-toolbar{border-radius:14px;}
-.tile{border-color:rgba(226,75,74,0.22);}
-.app-row{border-color:rgba(226,75,74,0.18);}
+.tile{border-color:rgba(var(--r-rgb),0.22);}
+.app-row{border-color:rgba(var(--r-rgb),0.18);}
 .app-row:hover{transform:translateX(4px) translateY(0);}
+.wp-thumb.sel{border-color:var(--r);box-shadow:0 0 0 2px rgba(var(--r-rgb),0.25);}
 
 /* Réduction de mouvement — on respecte le choix système de l'utilisateur */
 @media (prefers-reduced-motion:reduce){
@@ -1069,6 +1071,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 <body>
 
 <!-- FOND NEXUS — aurora + étoiles + grille (purement décoratif, derrière toute l'UI) -->
+<canvas id="majWallpaperFx" class="maj-wallpaper-fx" aria-hidden="true"></canvas>
 <div class="maj-aurora" aria-hidden="true">
   <span class="maj-aurora-blob a1"></span>
   <span class="maj-aurora-blob a2"></span>
@@ -1810,12 +1813,12 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <div class="setting-row">
       <div class="setting-lbl">Fond d'écran :</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <div class="wp-thumb" style="background:#111;" onclick="clearWallpaper()">🚫</div>
-        <div class="wp-thumb" style="background-image:url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=400')" onclick="setWallpaperUrl('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=1600')"></div>
-        <div class="wp-thumb" style="background-image:url('https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=400')" onclick="setWallpaperUrl('https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1600')"></div>
-        <div class="wp-thumb" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=400')" onclick="setWallpaperUrl('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600')"></div>
-        <div class="wp-thumb" style="background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400')" onclick="setWallpaperUrl('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600')"></div>
-        <div class="wp-thumb" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400')" onclick="setWallpaperUrl('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600')"></div>
+        <div class="wp-thumb" style="background:#111;" onclick="clearWallpaper();this.classList.add('sel')" title="Aucun fond">🚫</div>
+        <div class="wp-thumb" style="background:linear-gradient(160deg,#0a0509,#5a2030 55%,#2a1a4a);" onclick="setAnimatedWallpaper('nexus',this)" title="Nexus — aurore animée">🌌</div>
+        <div class="wp-thumb" style="background:linear-gradient(135deg,#1a0a00,#ff6600);" onclick="setAnimatedWallpaper('dbz',this)" title="Dragon Ball Z — aura d'énergie">⚡</div>
+        <div class="wp-thumb" style="background:linear-gradient(160deg,#030310,#8b0000);" onclick="setAnimatedWallpaper('avengers',this)" title="Avengers — étincelles">🛡️</div>
+        <div class="wp-thumb" style="background:linear-gradient(160deg,#0d0a02,#8b7300);" onclick="setAnimatedWallpaper('sda',this)" title="Seigneur des Anneaux — braises">💍</div>
+        <div class="wp-thumb" style="background:linear-gradient(160deg,#020810,#3a6ea5);" onclick="setAnimatedWallpaper('got',this)" title="Game of Thrones — givre & braises">❄️</div>
         <label class="wp-thumb" style="cursor:pointer;font-size:20px;">📂<input type="file" accept="image/*" style="display:none;" onchange="loadWallpaper(this)"/></label>
       </div>
     </div>
@@ -1825,7 +1828,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
       <span id="wpOpacityVal" style="color:var(--mut);min-width:40px;">18%</span>
     </div>
     <div id="wpPreview" class="setting-row" style="display:none;background:var(--s2);border-radius:8px;padding:8px;margin-top:6px;">
-      <span style="font-size:12px;color:var(--mut);">Fond actif</span>
+      <span id="wpPreviewLabel" style="font-size:12px;color:var(--mut);">Fond actif</span>
       <button class="btn-ghost" onclick="clearWallpaper()" style="margin-left:auto;font-size:11px;">Supprimer</button>
     </div>
   </div>
@@ -2486,6 +2489,53 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <div style="font-family:'Orbitron',sans-serif;font-size:clamp(10px,1.6vw,18px);font-weight:900;letter-spacing:8px;color:rgba(155,89,182,0.5);margin-top:4px;">PERFECTLY BALANCED</div>
   </div>
   <div class="standby-hint" style="color:rgba(155,89,182,0.2);">Appuyez sur <kbd>Échap</kbd> ou cliquez pour reprendre</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ÉCRAN VEILLE — GAME OF THRONES
+══════════════════════════════════════════════════ -->
+<div id="standbyGot" style="display:none;position:fixed;inset:0;z-index:9999;cursor:pointer;overflow:hidden;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at 50% 40%,#0a1c2e 0%,#050d18 60%,#000 100%);">
+  <canvas id="gotCanvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:20px;">
+    <!-- Cristal de givre au cœur de braise — emblème original (glace & feu), aucun sigil de maison -->
+    <svg width="190" height="190" viewBox="0 0 200 200" style="filter:drop-shadow(0 0 30px rgba(135,206,250,0.55));">
+      <defs>
+        <radialGradient id="gotEmber" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#ffcf66"/>
+          <stop offset="45%" stop-color="#ff6a3d"/>
+          <stop offset="100%" stop-color="#8b1e1e" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="gotIce" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#eaf6ff"/>
+          <stop offset="100%" stop-color="#5fa8d3"/>
+        </linearGradient>
+      </defs>
+      <!-- Halo de givre rotatif -->
+      <polygon points="100,15 158.9,66 158.9,134 100,185 41.1,134 41.1,66" fill="none" stroke="rgba(135,206,250,0.35)" stroke-width="1.5" stroke-dasharray="6 5" style="animation:sb-orbit 26s linear infinite reverse;transform-origin:100px 100px;"/>
+      <!-- Cristal — 6 branches givrées -->
+      <g stroke="url(#gotIce)" stroke-width="2.5" stroke-linecap="round" style="animation:sb-orbit 40s linear infinite;transform-origin:100px 100px;">
+        <line x1="100" y1="100" x2="100" y2="32"/>
+        <line x1="100" y1="100" x2="158.9" y2="66"/>
+        <line x1="100" y1="100" x2="158.9" y2="134"/>
+        <line x1="100" y1="100" x2="100" y2="168"/>
+        <line x1="100" y1="100" x2="41.1" y2="134"/>
+        <line x1="100" y1="100" x2="41.1" y2="66"/>
+        <line x1="100" y1="60" x2="90" y2="50"/><line x1="100" y1="60" x2="110" y2="50"/>
+        <line x1="135" y1="80" x2="142" y2="70"/><line x1="135" y1="80" x2="128" y2="68"/>
+        <line x1="135" y1="120" x2="142" y2="130"/><line x1="135" y1="120" x2="128" y2="132"/>
+        <line x1="100" y1="140" x2="90" y2="150"/><line x1="100" y1="140" x2="110" y2="150"/>
+        <line x1="65" y1="120" x2="58" y2="130"/><line x1="65" y1="120" x2="72" y2="132"/>
+        <line x1="65" y1="80" x2="58" y2="70"/><line x1="65" y1="80" x2="72" y2="68"/>
+      </g>
+      <!-- Cœur de braise -->
+      <circle cx="100" cy="100" r="22" fill="url(#gotEmber)" style="animation:sb-core-pulse 2.6s ease-in-out infinite;transform-origin:100px 100px;"/>
+      <circle cx="100" cy="100" r="9" fill="#ffe9c2" style="animation:sb-core-pulse 2.2s ease-in-out infinite .3s;transform-origin:100px 100px;"/>
+    </svg>
+    <div id="standbyTimeGot" style="font-family:'Orbitron',sans-serif;font-size:clamp(40px,8vw,88px);font-weight:700;color:#bfe3ff;text-shadow:0 0 30px rgba(135,206,250,0.6),0 0 60px rgba(255,110,60,0.25);letter-spacing:4px;line-height:1;"></div>
+    <div id="standbyDateGot" style="font-size:16px;letter-spacing:4px;color:rgba(135,206,250,0.45);text-transform:capitalize;"></div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:clamp(11px,1.8vw,20px);font-weight:900;letter-spacing:8px;color:rgba(135,206,250,0.5);margin-top:6px;">GLACE & BRAISE</div>
+  </div>
+  <div class="standby-hint" style="color:rgba(135,206,250,0.2);">Appuyez sur <kbd>Échap</kbd> ou cliquez pour reprendre</div>
 </div>
 
 <style>
@@ -3346,6 +3396,7 @@ const STANDBY_THEMES = [
   { id:'sda',        label:'Seigneur des Anneaux', bg:'linear-gradient(160deg,#050400,#0d0a02,#000)', preview:'linear-gradient(160deg,#0d0a02,#8b7300)' },
   { id:'saiyan',     label:'Super Saiyan',    bg:'linear-gradient(135deg,#000510,#001030,#000)',    preview:'linear-gradient(135deg,#000510,#002060)' },
   { id:'thanos',     label:'Thanos',          bg:'linear-gradient(160deg,#050010,#100020,#000)',    preview:'linear-gradient(160deg,#150025,#4b0080)' },
+  { id:'got',        label:'Game of Thrones', bg:'linear-gradient(160deg,#0a1c2e,#050d18,#000)',    preview:'linear-gradient(160deg,#0a1c2e,#3a6ea5)' },
 ];
 
 let currentStandbyTheme = localStorage.getItem('majin_standby_theme') || 'majin';
@@ -3371,6 +3422,7 @@ function renderStandbyThemes(){
     if(t.id==='sda'){card.innerHTML='<svg viewBox="0 0 60 60" width="100%" style="position:absolute;inset:0"><circle cx="30" cy="30" r="18" fill="none" stroke="#d4af37" stroke-width="1.5" opacity=".6"/><circle cx="30" cy="30" r="12" fill="none" stroke="#8b7300" stroke-width=".8" opacity=".4"/><text x="30" y="34" text-anchor="middle" fill="#d4af37" font-size="8" opacity=".8" font-family="serif">ᚨᚾᚾᚢᛗᛁᚾᚨ</text><path d="M15 30 Q30 10 45 30" stroke="#d4af37" stroke-width="1" fill="none" opacity=".5"/></svg>'+card.innerHTML;}
     if(t.id==='saiyan'){card.innerHTML='<svg viewBox="0 0 60 60" width="100%" style="position:absolute;inset:0"><circle cx="30" cy="30" r="16" fill="none" stroke="#4488ff" stroke-width="1.5" opacity=".6"/><path d="M30 10 L34 26 L30 22 L26 26 Z" fill="#88bbff" opacity=".8"/><path d="M20 38 L30 26 L40 38" fill="none" stroke="#88bbff" stroke-width="1.5" opacity=".6"/><circle cx="30" cy="42" r="3" fill="#4488ff" opacity=".5"/></svg>'+card.innerHTML;}
     if(t.id==='thanos'){card.innerHTML='<svg viewBox="0 0 60 60" width="100%" style="position:absolute;inset:0"><path d="M15 45 L30 10 L45 45 Z" fill="none" stroke="#9b59b6" stroke-width="1.5" opacity=".7"/><circle cx="22" cy="38" r="3.5" fill="#ff6600" opacity=".9"/><circle cx="30" cy="36" r="3.5" fill="#9b59b6" opacity=".9"/><circle cx="38" cy="38" r="3.5" fill="#3498db" opacity=".9"/><circle cx="26" cy="30" r="3.5" fill="#2ecc71" opacity=".9"/><circle cx="34" cy="30" r="3.5" fill="#e74c3c" opacity=".9"/><circle cx="30" cy="24" r="3.5" fill="#f1c40f" opacity=".9"/></svg>'+card.innerHTML;}
+    if(t.id==='got'){card.innerHTML='<svg viewBox="0 0 60 60" width="100%" style="position:absolute;inset:0"><g stroke="#87ceeb" stroke-width="1.3" stroke-linecap="round" opacity=".75"><line x1="30" y1="30" x2="30" y2="10"/><line x1="30" y1="30" x2="47.7" y2="20"/><line x1="30" y1="30" x2="47.7" y2="40"/><line x1="30" y1="30" x2="30" y2="50"/><line x1="30" y1="30" x2="12.3" y2="40"/><line x1="30" y1="30" x2="12.3" y2="20"/></g><circle cx="30" cy="30" r="6" fill="#ff6a3d" opacity=".85"/><circle cx="30" cy="30" r="2.5" fill="#ffe9c2"/></svg>'+card.innerHTML;}
     card.onclick = () => selectStandbyTheme(t.id);
     grid.appendChild(card);
   });
@@ -3806,11 +3858,59 @@ function startThanosCanvas(){
 }
 function stopThanosCanvas(){ cancelAnimationFrame(standbyAnimFrames.thanos); }
 
+// ── GAME OF THRONES CANVAS — neige qui tombe + braises qui montent ───────
+function startGotCanvas(){
+  const c=document.getElementById('gotCanvas');if(!c)return;
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const ctx=c.getContext('2d');
+  let t=0;
+  const snow=Array.from({length:60},()=>({
+    x:Math.random()*c.width, y:Math.random()*c.height,
+    r:Math.random()*1.6+0.5, vx:(Math.random()-0.5)*0.25, vy:Math.random()*0.4+0.15,
+    opacity:Math.random()*0.5+0.15
+  }));
+  const embers=Array.from({length:18},()=>({
+    x:Math.random()*c.width, y:c.height+Math.random()*c.height,
+    r:Math.random()*1.6+0.4, vx:(Math.random()-0.5)*0.25, vy:-(Math.random()*0.4+0.15),
+    opacity:Math.random()*0.5+0.1
+  }));
+  function draw(){
+    standbyAnimFrames.got=requestAnimationFrame(draw);
+    t+=0.005;
+    ctx.clearRect(0,0,c.width,c.height);
+    // Lueur de givre en haut
+    const gIce=ctx.createRadialGradient(c.width/2,c.height*0.18,0,c.width/2,c.height*0.18,Math.min(c.width,c.height)*0.45);
+    gIce.addColorStop(0,'rgba(140,180,215,0.07)');
+    gIce.addColorStop(0.6,'rgba(40,70,100,0.03)');
+    gIce.addColorStop(1,'transparent');
+    ctx.fillStyle=gIce;ctx.fillRect(0,0,c.width,c.height);
+    // Neige qui tombe
+    snow.forEach(p=>{
+      p.x+=p.vx+Math.sin(t*2+p.y*0.01)*0.15;
+      p.y+=p.vy;
+      if(p.y>c.height+5){p.y=-5;p.x=Math.random()*c.width;}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(220,238,255,0.8)';ctx.globalAlpha=p.opacity;ctx.fill();
+    });
+    // Braises qui montent
+    embers.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.y<-10){p.y=c.height+10;p.x=Math.random()*c.width;}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,110,60,0.75)';ctx.globalAlpha=p.opacity;ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
+  draw();
+}
+function stopGotCanvas(){ cancelAnimationFrame(standbyAnimFrames.got); }
+
 // ── IDs des écrans de veille par thème ───────────────────────────────────────
 const THEME_SCREENS = {
   majin:'standbyScreen',
   maroc:'standbyMaroc', lune:'standbyLune', arabesque:'standbyArabesque', nuit:'standbyNuit',
-  dbz:'standbyDbz', avengers:'standbyAvengers', sda:'standbySda', saiyan:'standbySaiyan', thanos:'standbyThanos'
+  dbz:'standbyDbz', avengers:'standbyAvengers', sda:'standbySda', saiyan:'standbySaiyan', thanos:'standbyThanos',
+  got:'standbyGot'
 };
 const THEME_CLOCK_IDS = {
   maroc:['standbyTimeMaroc','standbyDateMaroc'],
@@ -3821,7 +3921,8 @@ const THEME_CLOCK_IDS = {
   avengers:['standbyTimeAvengers','standbyDateAvengers'],
   sda:['standbyTimeSda','standbyDateSda'],
   saiyan:['standbyTimeSaiyan','standbyDateSaiyan'],
-  thanos:['standbyTimeThanos','standbyDateThanos']
+  thanos:['standbyTimeThanos','standbyDateThanos'],
+  got:['standbyTimeGot','standbyDateGot']
 };
 
 let standbyActive=false;
@@ -3889,6 +3990,7 @@ function enterStandby(){
   else if(currentStandbyTheme==='sda') startSdaCanvas();
   else if(currentStandbyTheme==='saiyan') startSaiyanCanvas();
   else if(currentStandbyTheme==='thanos') startThanosCanvas();
+  else if(currentStandbyTheme==='got') startGotCanvas();
 
   // Icône bouton
   const btn=document.getElementById('standbyBtn');
@@ -3957,6 +4059,7 @@ function exitStandby(){
   else if(currentStandbyTheme==='sda') stopSdaCanvas();
   else if(currentStandbyTheme==='saiyan') stopSaiyanCanvas();
   else if(currentStandbyTheme==='thanos') stopThanosCanvas();
+  else if(currentStandbyTheme==='got') stopGotCanvas();
 
   clearInterval(standbyTickInterval);
   clearInterval(standbyParticleInterval);
@@ -6748,15 +6851,30 @@ function setAccent(col,el){
   const rgb=col.replace('#','');const r=parseInt(rgb.slice(0,2),16),gg=parseInt(rgb.slice(2,4),16),b=parseInt(rgb.slice(4,6),16);
   document.documentElement.style.setProperty('--rb',`rgba(${r},${gg},${b},0.18)`);
   document.documentElement.style.setProperty('--bor',`rgba(${r},${gg},${b},0.3)`);
+  document.documentElement.style.setProperty('--r-rgb',`${r},${gg},${b}`);
   document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('active'));
   if(el)el.classList.add('active');
   localStorage.setItem('majin_accent',col);
 }
 function loadWallpaper(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{applyWallpaper(e.target.result);localStorage.setItem('majin_wallpaper',e.target.result);};reader.readAsDataURL(file);}
 function setWallpaperUrl(url){applyWallpaper(url);localStorage.setItem('majin_wallpaper',url);}
-function applyWallpaper(url){document.documentElement.style.setProperty('--wallpaper',`url('${url}')`);document.getElementById('wpPreview').style.display='flex';}
-function clearWallpaper(){document.documentElement.style.setProperty('--wallpaper','none');document.getElementById('wpPreview').style.display='none';localStorage.removeItem('majin_wallpaper');}
-function setWallpaperOpacity(v){document.getElementById('wpOpacityVal').textContent=v+'%';let s=document.getElementById('wpOpacityStyle');if(!s){s=document.createElement('style');s.id='wpOpacityStyle';document.head.appendChild(s);}s.textContent=`body::before{opacity:${(parseInt(v)/100).toFixed(2)}!important;}`;localStorage.setItem('majin_wp_opacity',v);}
+function applyWallpaper(url){
+  if(typeof stopWallpaperFx==='function')stopWallpaperFx();
+  localStorage.removeItem('majin_wallpaper_fx');
+  document.querySelectorAll('.wp-thumb').forEach(d=>d.classList.remove('sel'));
+  document.documentElement.style.setProperty('--wallpaper',`url('${url}')`);
+  const lbl=document.getElementById('wpPreviewLabel');if(lbl)lbl.textContent='Fond actif : image personnalisée';
+  document.getElementById('wpPreview').style.display='flex';
+}
+function clearWallpaper(){
+  if(typeof stopWallpaperFx==='function')stopWallpaperFx();
+  localStorage.removeItem('majin_wallpaper_fx');
+  document.querySelectorAll('.wp-thumb').forEach(d=>d.classList.remove('sel'));
+  document.documentElement.style.setProperty('--wallpaper','none');
+  document.getElementById('wpPreview').style.display='none';
+  localStorage.removeItem('majin_wallpaper');
+}
+function setWallpaperOpacity(v){document.getElementById('wpOpacityVal').textContent=v+'%';let s=document.getElementById('wpOpacityStyle');if(!s){s=document.createElement('style');s.id='wpOpacityStyle';document.head.appendChild(s);}const op=(parseInt(v)/100).toFixed(2);s.textContent=`body::before{opacity:${op}!important;}.maj-wallpaper-fx{opacity:${op}!important;}`;localStorage.setItem('majin_wp_opacity',v);}
 
 // ===== TABS =====
 function swTab(el,id){
@@ -7040,7 +7158,7 @@ const PREF_KEYS = [
   'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_notes','majin_gmail',
   'majin_local_desktop_apps',
   'majin_news_src','majin_news_custom_url','majin_ticker_speed',
-  'majin_theme','majin_compact','majin_accent','majin_wallpaper','majin_wp_opacity',
+  'majin_theme','majin_compact','majin_accent','majin_wallpaper','majin_wallpaper_fx','majin_wp_opacity',
   'majin_tts','majin_tts_voice','majin_tts_rate','majin_tts_pitch','majin_tts_volume',
   'majin_brave_auto',
   'majin_standby_auto','majin_standby_delay','majin_standby_sound','majin_standby_theme',
@@ -7234,6 +7352,145 @@ function applyImportedPrefs(jsonStr){
   }
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduceMotion) window.addEventListener('load', initNexusStarfield);
+})();
+</script>
+
+<script>
+// ── NEXUS — fonds d'écran animés (Nexus / DBZ / Avengers / SDA / Game of Thrones) ──
+// Entièrement autonome : n'ajoute que window.setAnimatedWallpaper / window.stopWallpaperFx,
+// utilisées par applyWallpaper()/clearWallpaper() existants pour l'exclusivité avec le fond statique.
+// Effets génératifs originaux (particules + halo de couleur) — aucune image ni logo des œuvres citées.
+(function(){
+  var WP_NAMES = {nexus:'Nexus',dbz:'Dragon Ball Z',avengers:'Avengers',sda:'Seigneur des Anneaux',got:'Game of Thrones'};
+  var WP_FX = {
+    nexus:{
+      glow:{x:.5,y:.18,r:.55,stops:[[0,'rgba(226,75,74,0.09)'],[.5,'rgba(167,139,250,0.045)'],[1,'transparent']]},
+      n:55, speed:.16, drift:'float',
+      color:function(){return 'hsla(' + (350 + Math.random()*30) + ',85%,' + (60+Math.random()*15) + '%,1)';}
+    },
+    dbz:{
+      glow:{x:.5,y:.5,r:.35,stops:[[0,'rgba(255,180,0,0.07)'],[.5,'rgba(255,100,0,0.035)'],[1,'transparent']]},
+      n:46, speed:.3, drift:'float',
+      color:function(){return 'hsl(' + (30 + Math.random()*30) + ',100%,' + (50+Math.random()*30) + '%)';}
+    },
+    avengers:{
+      sparkLines:true,
+      n:34, speed:.4, drift:'float',
+      color:function(){return Math.random() > .5 ? 'rgba(196,30,58,.5)' : 'rgba(65,105,225,.5)';}
+    },
+    sda:{
+      glow:{x:.5,y:.4,r:.3,stops:[[0,'rgba(212,175,55,0.06)'],[.6,'rgba(139,115,0,0.03)'],[1,'transparent']]},
+      n:40, speed:.3, drift:'rise',
+      color:function(){return 'rgba(212,175,55,.55)';}
+    },
+    got:{
+      glow:{x:.5,y:.16,r:.45,stops:[[0,'rgba(140,180,215,0.07)'],[.6,'rgba(40,70,100,0.03)'],[1,'transparent']]},
+      n:46, speed:.22, drift:'fall',
+      color:function(){return Math.random() > .86 ? 'rgba(196,60,40,.5)' : 'rgba(190,215,235,.5)';}
+    }
+  };
+  var wpRaf = null, wpParticles = [], wpTheme = null;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function wpCanvas(){ return document.getElementById('majWallpaperFx'); }
+
+  function seedParticles(cfg, w, h){
+    var arr = [];
+    for (var i = 0; i < cfg.n; i++){
+      arr.push({
+        x: Math.random() * w,
+        y: cfg.drift === 'rise' ? h + Math.random() * h : (cfg.drift === 'fall' ? -Math.random() * h : Math.random() * h),
+        r: Math.random() * 1.8 + 0.4,
+        vx: (Math.random() - .5) * cfg.speed,
+        vy: cfg.drift === 'rise' ? -(Math.random() * cfg.speed + .1) : (cfg.drift === 'fall' ? (Math.random() * cfg.speed + .15) : (Math.random() - .5) * cfg.speed),
+        opacity: Math.random() * .5 + .15,
+        color: cfg.color()
+      });
+    }
+    return arr;
+  }
+
+  function stopWallpaperFx(){
+    if (wpRaf) cancelAnimationFrame(wpRaf);
+    wpRaf = null; wpTheme = null;
+    var c = wpCanvas();
+    if (c){ var ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
+  }
+
+  function drawFrame(cfg, c, ctx, t){
+    var w = c.width, h = c.height;
+    ctx.clearRect(0, 0, w, h);
+    if (cfg.glow){
+      var g = ctx.createRadialGradient(w*cfg.glow.x, h*cfg.glow.y, 0, w*cfg.glow.x, h*cfg.glow.y, Math.min(w,h)*cfg.glow.r);
+      cfg.glow.stops.forEach(function(s){ g.addColorStop(s[0], s[1]); });
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
+    if (cfg.sparkLines){
+      for (var i = 0; i < 3; i++){
+        ctx.beginPath();
+        ctx.moveTo(w/2 + Math.cos(t+i*2.1)*w*.4, h/2 + Math.sin(t+i*2.1)*h*.3);
+        ctx.lineTo(w/2 + Math.cos(t+i*2.1+Math.PI)*w*.4, h/2 + Math.sin(t+i*2.1+Math.PI)*h*.3);
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(196,30,58,0.05)' : 'rgba(65,105,225,0.05)';
+        ctx.lineWidth = 1.5; ctx.stroke();
+      }
+    }
+    wpParticles.forEach(function(p){
+      p.x += p.vx; p.y += p.vy;
+      if (cfg.drift === 'rise'){ if (p.y < -10){ p.y = h+10; p.x = Math.random()*w; } }
+      else if (cfg.drift === 'fall'){ if (p.y > h+10){ p.y = -10; p.x = Math.random()*w; } }
+      else { if (p.x<0)p.x=w; if (p.x>w)p.x=0; if (p.y<0)p.y=h; if (p.y>h)p.y=0; }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.color; ctx.globalAlpha = p.opacity; ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function startWallpaperFx(themeId, el){
+    var cfg = WP_FX[themeId];
+    if (!cfg) return;
+    stopWallpaperFx();
+    var c = wpCanvas(); if (!c) return;
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    var ctx = c.getContext('2d');
+    wpParticles = seedParticles(cfg, c.width, c.height);
+    wpTheme = themeId;
+    // Exclusivité avec le fond statique (image) — déjà nettoyé côté applyWallpaper/clearWallpaper
+    document.documentElement.style.setProperty('--wallpaper', 'none');
+    localStorage.removeItem('majin_wallpaper');
+    localStorage.setItem('majin_wallpaper_fx', themeId);
+    var prev = document.getElementById('wpPreview');
+    var lbl = document.getElementById('wpPreviewLabel');
+    if (prev) prev.style.display = 'flex';
+    if (lbl) lbl.textContent = 'Fond actif : ' + (WP_NAMES[themeId] || themeId);
+    document.querySelectorAll('.wp-thumb').forEach(function(d){ d.classList.remove('sel'); });
+    if (el) el.classList.add('sel');
+    if (reduceMotion){ drawFrame(cfg, c, ctx, 0); return; }
+    var t = 0;
+    function loop(){
+      wpRaf = requestAnimationFrame(loop);
+      if (document.hidden) return;
+      t += 0.01;
+      drawFrame(cfg, c, ctx, t);
+    }
+    loop();
+  }
+
+  function resizeWpCanvas(){
+    var c = wpCanvas(); if (!c || !wpTheme) return;
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    wpParticles = seedParticles(WP_FX[wpTheme], c.width, c.height);
+  }
+  window.addEventListener('resize', resizeWpCanvas);
+
+  // Exposées globalement — utilisées par les onclick du HTML et par applyWallpaper()/clearWallpaper()
+  window.setAnimatedWallpaper = startWallpaperFx;
+  window.stopWallpaperFx = stopWallpaperFx;
+
+  // Restauration au chargement (préférence indépendante du fond statique existant)
+  window.addEventListener('load', function(){
+    var saved = localStorage.getItem('majin_wallpaper_fx');
+    if (saved && WP_FX[saved]) startWallpaperFx(saved);
+  });
 })();
 </script>
 
