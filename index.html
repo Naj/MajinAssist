@@ -977,10 +977,105 @@ body.dash-editing-media .drag-handle{opacity:1;}
 }
 .app-row:hover .app-drag-handle,.tile:hover .app-drag-handle{opacity:1;}
 .tile .app-drag-handle{top:3px;left:3px;transform:none;font-size:9px;}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NEXUS — HABILLAGE VISUEL (aurora + verre + halo)
+   Toutes les fonctionnalités, IDs, classes et logique restent inchangés.
+   Ce bloc surcharge uniquement l'apparence (couleurs, flou, ombres, radius).
+═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.05),rgba(255,255,255,0.004) 50%),rgba(15,12,18,0.78);
+  --maj-bd:rgba(226,75,74,0.4);
+  --maj-rad:20px;
+  --maj-blur:blur(11px) saturate(1.3);
+  --maj-glow:0 0 34px rgba(226,75,74,0.16),0 18px 54px rgba(0,0,0,0.55);
+  --maj-glow-hi:0 0 0 1px rgba(226,75,74,0.5),0 0 46px rgba(226,75,74,0.3),0 24px 60px rgba(0,0,0,0.6);
+  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(226,75,74,0.12),transparent 55%),#060509;
+}
+:root.light{
+  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.95),rgba(255,255,255,0.7)),rgba(252,250,253,0.86);
+  --maj-bd:rgba(226,75,74,0.32);
+  --maj-glow:0 0 30px rgba(226,75,74,0.12),0 18px 48px rgba(120,90,140,0.16);
+  --maj-glow-hi:0 0 0 1px rgba(226,75,74,0.42),0 0 38px rgba(226,75,74,0.2),0 20px 50px rgba(120,90,140,0.2);
+  --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(226,75,74,0.1),transparent 52%),#eceaf3;
+}
+
+/* Fond Nexus : aurora + champ d'étoiles + grille subtile, derrière tout le reste */
+body{background:var(--maj-bg-grad);}
+.maj-aurora{position:fixed;inset:-25%;z-index:0;pointer-events:none;overflow:hidden;animation:majHue 9s ease-in-out infinite alternate;}
+.maj-aurora,.maj-aurora-blob{animation-play-state:var(--anim-state,running);}
+.maj-aurora-blob{position:absolute;border-radius:50%;filter:blur(72px);}
+.maj-aurora-blob.a1{width:60vw;height:60vw;left:-12%;top:-18%;background:radial-gradient(circle,rgba(226,75,74,0.5),transparent 64%);animation:majAur1 19s ease-in-out infinite;}
+.maj-aurora-blob.a2{width:54vw;height:54vw;right:-15%;top:8%;background:radial-gradient(circle,rgba(167,139,250,0.38),transparent 66%);filter:blur(82px);animation:majAur2 23s ease-in-out infinite;}
+.maj-aurora-blob.a3{width:46vw;height:46vw;left:30%;bottom:-22%;background:radial-gradient(circle,rgba(226,75,74,0.28),transparent 65%);filter:blur(76px);animation:majAur3 27s ease-in-out infinite;}
+.maj-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.maj-gridlayer{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(226,75,74,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(226,75,74,0.045) 1px,transparent 1px);background-size:46px 46px;}
+:root.light .maj-gridlayer{background-image:linear-gradient(rgba(140,90,160,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(140,90,160,0.05) 1px,transparent 1px);}
+@keyframes majAur1{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(18vw,12vh) scale(1.25);}66%{transform:translate(-10vw,22vh) scale(.9);}}
+@keyframes majAur2{0%,100%{transform:translate(0,0) scale(1.1);}40%{transform:translate(-22vw,16vh) scale(.85);}75%{transform:translate(14vw,-10vh) scale(1.3);}}
+@keyframes majAur3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20vw,-14vh) scale(1.2);}}
+@keyframes majHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(18deg);}}
+@keyframes majSheen{0%{transform:translateX(-120%) skewX(-18deg);}100%{transform:translateX(320%) skewX(-18deg);}}
+
+/* Barres de l'interface en verre dépoli Nexus */
+.hdr,.wave,.inp-bar,.tabs,.stbar,.news-ticker{
+  background:var(--maj-panel)!important;
+  border-color:var(--maj-bd)!important;
+  backdrop-filter:var(--maj-blur);
+  -webkit-backdrop-filter:var(--maj-blur);
+}
+:root.light .hdr,:root.light .wave,:root.light .inp-bar,:root.light .tabs,
+:root.light .stbar,:root.light .news-ticker{background:var(--maj-panel)!important;}
+
+/* Cartes du dashboard + panneaux génériques */
+.pan,.dash-widget{
+  background:var(--maj-panel)!important;
+  border-color:var(--maj-bd)!important;
+  border-radius:var(--maj-rad)!important;
+  backdrop-filter:var(--maj-blur);
+  -webkit-backdrop-filter:var(--maj-blur);
+  box-shadow:var(--maj-glow);
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+:root.light .dash-widget{background:var(--maj-panel)!important;box-shadow:var(--maj-glow);}
+.dash-widget:hover{transform:translateY(-3px);box-shadow:var(--maj-glow-hi);}
+/* Sweep lumineux au survol — clippé par overflow:hidden existant */
+.dash-widget::after{
+  content:'';position:absolute;top:0;left:-30%;width:34%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+  pointer-events:none;opacity:0;transform:translateX(-120%) skewX(-18deg);
+}
+.dash-widget:hover::after{opacity:1;animation:majSheen .9s ease;}
+/* Pas de soulèvement pendant le drag / redimensionnement / édition — évite tout décalage de mesure */
+body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-editing-media .dash-widget,
+.dash-widget.dragging,.dash-widget.drag-over,.dash-widget:active{transform:none!important;box-shadow:var(--maj-glow)!important;}
+
+/* Modales, vignettes, jours météo — même langage visuel, coins plus doux */
+.modal-box{background:var(--maj-panel)!important;border-color:var(--maj-bd)!important;border-radius:var(--maj-rad);box-shadow:var(--maj-glow);backdrop-filter:var(--maj-blur);-webkit-backdrop-filter:var(--maj-blur);}
+.tile,.app-row,.wfday,.cal-shell-toolbar{border-radius:14px;}
+.tile{border-color:rgba(226,75,74,0.22);}
+.app-row{border-color:rgba(226,75,74,0.18);}
+.app-row:hover{transform:translateX(4px) translateY(0);}
+
+/* Réduction de mouvement — on respecte le choix système de l'utilisateur */
+@media (prefers-reduced-motion:reduce){
+  .maj-aurora,.maj-aurora-blob{animation:none!important;}
+  .dash-widget,.dash-widget:hover{transition:none!important;transform:none!important;}
+}
+
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 </head>
 <body>
+
+<!-- FOND NEXUS — aurora + étoiles + grille (purement décoratif, derrière toute l'UI) -->
+<div class="maj-aurora" aria-hidden="true">
+  <span class="maj-aurora-blob a1"></span>
+  <span class="maj-aurora-blob a2"></span>
+  <span class="maj-aurora-blob a3"></span>
+</div>
+<canvas id="majStars" class="maj-starfield" aria-hidden="true"></canvas>
+<div class="maj-gridlayer" aria-hidden="true"></div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -7088,12 +7183,77 @@ function applyImportedPrefs(jsonStr){
 </div>
 
 <script>
+// ── NEXUS — champ d'étoiles décoratif ──────────────────────────────────
+// Script autonome : ne touche à aucune fonction/variable existante.
+// S'arrête quand l'onglet est masqué et respecte prefers-reduced-motion.
+(function(){
+  function initNexusStarfield(){
+    var cv = document.getElementById('majStars');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var stars = [];
+    function seed(){
+      var w = cv.width, h = cv.height;
+      var n = Math.min(120, Math.max(40, Math.floor((w * h) / 13000)));
+      stars = [];
+      for (var i = 0; i < n; i++){
+        stars.push({
+          x: Math.random() * w, y: Math.random() * h,
+          r: Math.random() * 1.7 + 0.4,
+          vx: (Math.random() - 0.5) * 0.18, vy: (Math.random() - 0.5) * 0.18,
+          a: Math.random() * Math.PI * 2, sp: Math.random() * 0.04 + 0.01
+        });
+      }
+    }
+    function resize(){
+      cv.width = window.innerWidth;
+      cv.height = window.innerHeight;
+      seed();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    function draw(){
+      if (!document.hidden){
+        var w = cv.width, h = cv.height;
+        ctx.clearRect(0, 0, w, h);
+        for (var i = 0; i < stars.length; i++){
+          var s = stars[i];
+          s.x += s.vx; s.y += s.vy; s.a += s.sp;
+          if (s.x < 0) s.x = w; if (s.x > w) s.x = 0;
+          if (s.y < 0) s.y = h; if (s.y > h) s.y = 0;
+          var tw = 0.4 + 0.6 * (Math.sin(s.a) * 0.5 + 0.5);
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,160,158,' + (tw * 0.85).toFixed(2) + ')';
+          ctx.fill();
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) window.addEventListener('load', initNexusStarfield);
+})();
+</script>
+
+<script>
 // Enregistrement du Service Worker (installabilité PWA — pas de cache offline,
 // voir sw.js : MAJIN dépend d'API live donc pas de mode hors-ligne complet).
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.warn('SW registration failed:', err);
+    // On vérifie d'abord que /sw.js existe réellement à cette adresse avant
+    // de tenter l'enregistrement : évite un warning console quand l'app est
+    // prévisualisée hors de son domaine de déploiement (Cloudflare Pages),
+    // où ce fichier n'est pas servi à la racine.
+    fetch('/sw.js', { method: 'HEAD' }).then(res => {
+      if (res.ok) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.warn('SW registration failed:', err);
+        });
+      }
+    }).catch(() => {
+      // Hors-ligne ou domaine de prévisualisation sans /sw.js — on n'insiste pas.
     });
   });
 }
