@@ -638,6 +638,39 @@ body.dash-edit-active /* EN-TÊTE MODIFIABLE */
   60% {opacity:1;transform:translateY(1px)  skewX(1deg);}
   100%{opacity:1;transform:translateY(0)    skewX(0);}
 }
+
+/* ══ ÉCRAN DE DÉMARRAGE ══════════════════════════════════════════ */
+#splashScreen{
+  position:fixed;inset:0;z-index:99999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:radial-gradient(120% 90% at 50% 30%,rgba(226,74,74,0.08),transparent 60%),#09090b;
+  animation:splash-fade-out .6s ease 4.4s forwards;
+}
+#splashScreen.splash-gone{display:none;}
+.splash-rings{
+  position:absolute;width:340px;height:340px;border-radius:50%;
+  border:1px solid rgba(226,74,74,0.15);
+  animation:splash-ring-pulse 2.4s ease-out infinite;
+}
+@keyframes splash-ring-pulse{
+  0%{transform:scale(0.6);opacity:0;}
+  40%{opacity:0.6;}
+  100%{transform:scale(1.15);opacity:0;}
+}
+.splash-logo{margin-bottom:18px;animation:logo-reveal .6s ease both;}
+.splash-title{
+  font-family:var(--fonthud);font-size:34px;font-weight:900;letter-spacing:10px;color:var(--txt);
+  animation:logo-reveal .6s ease .15s both;
+}
+.splash-title span{color:var(--r);}
+.splash-sub{
+  font-family:var(--fonthud);font-size:11px;letter-spacing:4px;color:var(--mut);text-transform:uppercase;
+  margin-bottom:26px;animation:logo-reveal .6s ease .25s both;
+}
+.splash-bar{width:200px;height:3px;border-radius:2px;background:rgba(226,74,74,0.15);overflow:hidden;}
+.splash-bar-fill{height:100%;background:linear-gradient(90deg,var(--r),#ff9a8f);border-radius:2px;width:0;animation:splash-bar-grow 4.6s linear forwards;}
+@keyframes splash-bar-grow{from{width:0;}to{width:100%;}}
+@keyframes splash-fade-out{from{opacity:1;visibility:visible;}to{opacity:0;visibility:hidden;}}
 @keyframes logo-letter-glow{
   0%,100%{text-shadow:none;}
   50%{text-shadow:0 0 12px var(--r),0 0 24px rgba(226,74,74,.4);}
@@ -1107,6 +1140,63 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════════
+     ÉCRAN DE DÉMARRAGE — logo animé, ~5 secondes
+═══════════════════════════════════════════════════════ -->
+<div id="splashScreen">
+  <div class="splash-rings" aria-hidden="true"></div>
+  <svg class="splash-logo" width="130" height="130" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="splashCoreGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ff6b6a" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#E24B4A" stop-opacity="0.6"/>
+      </radialGradient>
+      <filter id="splashGlow">
+        <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="splashGlowStrong">
+        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <g style="transform-origin:20px 20px;animation:logo-spin-cw 12s linear infinite;">
+      <circle cx="20" cy="20" r="18.5" stroke="#E24B4A" stroke-width="0.8" stroke-opacity="0.6" stroke-dasharray="3 4" filter="url(#splashGlow)"/>
+      <circle cx="20" cy="1.5" r="1.2" fill="#E24B4A" opacity="0.9"/>
+      <circle cx="38.5" cy="20" r="1.2" fill="#E24B4A" opacity="0.9"/>
+      <circle cx="20" cy="38.5" r="1.2" fill="#E24B4A" opacity="0.9"/>
+      <circle cx="1.5" cy="20" r="1.2" fill="#E24B4A" opacity="0.9"/>
+    </g>
+    <g style="transform-origin:20px 20px;animation:logo-spin-ccw 8s linear infinite;">
+      <circle cx="20" cy="20" r="12" stroke="#E24B4A" stroke-width="0.7" stroke-opacity="0.45" stroke-dasharray="1.5 3.5"/>
+      <rect x="19.4" y="8.2" width="1.2" height="3" rx="0.6" fill="#E24B4A" opacity="0.7"/>
+      <rect x="19.4" y="28.8" width="1.2" height="3" rx="0.6" fill="#E24B4A" opacity="0.7"/>
+      <rect x="8.2" y="19.4" width="3" height="1.2" rx="0.6" fill="#E24B4A" opacity="0.7"/>
+      <rect x="28.8" y="19.4" width="3" height="1.2" rx="0.6" fill="#E24B4A" opacity="0.7"/>
+    </g>
+    <circle cx="20" cy="20" r="7" fill="rgba(226,74,74,0.08)" stroke="#E24B4A" stroke-width="1" stroke-opacity="0.5" filter="url(#splashGlow)"/>
+    <circle cx="20" cy="20" r="3.2" fill="url(#splashCoreGrad)" filter="url(#splashGlowStrong)" style="animation:logo-core-pulse 2.2s ease-in-out infinite;transform-origin:20px 20px;"/>
+    <circle cx="20" cy="20" r="1.4" fill="#fff" opacity="0.95"/>
+    <g style="transform-origin:20px 20px;animation:logo-spin-cw 3s linear infinite;">
+      <path d="M20 2 A18 18 0 0 1 33 9" stroke="rgba(226,74,74,0.7)" stroke-width="1.5" stroke-linecap="round" filter="url(#splashGlow)"/>
+    </g>
+  </svg>
+  <div class="splash-title">MA<span>J</span>IN</div>
+  <div class="splash-sub">MY ADAPTIVE JOINT INTELLIGENCE NODE</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+<script>
+  (function(){
+    var s=document.getElementById('splashScreen');
+    if(!s)return;
+    s.addEventListener('animationend',function(e){
+      if(e.animationName==='splash-fade-out'){s.classList.add('splash-gone');}
+    });
+    // filet de sécurité si l'événement d'animation ne se déclenche pas
+    setTimeout(function(){s.classList.add('splash-gone');},5200);
+  })();
+</script>
+
 <!-- FOND NEXUS — logos animés (CSS pur) + aurora + étoiles + grille -->
 <div id="wpLogoLayer" class="maj-wp-logo-layer" aria-hidden="true">
   <!-- NEXUS -->
@@ -1542,23 +1632,6 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- ===== MEDIA ===== -->
 <div class="content dashboard-grid" id="tab-media" style="display:grid;">
-
-  <!-- PLEX -->
-  <div class="dash-widget col-4" id="dw-media-plex" data-wid="media-plex">
-    <div class="drag-handle" title="Déplacer">⠿</div>
-    <div class="resize-handle"></div>
-    <div class="pan" style="border:none;background:transparent;">
-      <div class="pan-title">
-        <i class="ti ti-device-tv"></i>
-        <span class="pan-title-editable" ondblclick="editHeader(this,'hdr_plex')" id="hdr_plex_display">Bibliothèque Plex</span>
-        <span id="plexViewToggle" style="margin-left:auto;"></span>
-        <button class="btn-ghost" style="font-size:11px;padding:3px 10px;" onclick="setEditMode('plex',!editModes.plex)">
-          <i class="ti ti-edit" id="editIconplex"></i> <span id="editLabelplex">Modifier</span>
-        </button>
-      </div>
-      <div id="mediaList-plex"></div>
-    </div>
-  </div>
 
   <!-- SPOTIFY -->
   <div class="dash-widget col-4" id="dw-media-spotify" data-wid="media-spotify">
@@ -2803,7 +2876,7 @@ let dashLayoutMedia=JSON.parse(localStorage.getItem('majin_dash_layout_media')||
 const DEFAULT_LAYOUT_HOME={'weather':{col:4,row:0},'cal':{col:4,row:0},'ai':{col:4,row:0}};
 const DEFAULT_LAYOUT={'perso-sante':{col:4,row:0},'perso-services':{col:4,row:0},'perso-reseaux':{col:4,row:0},'perso-ecommerce':{col:4,row:0},'perso-sport':{col:4,row:0},'perso-addcat':{col:4,row:0}};
 const DEFAULT_LAYOUT_PRO={'pro-m365':{col:8,row:0},'pro-collab':{col:4,row:0},'pro-transport':{col:8,row:0}};
-const DEFAULT_LAYOUT_MEDIA={'media-plex':{col:4,row:0},'media-spotify':{col:4,row:0},'media-ia':{col:4,row:0}};
+const DEFAULT_LAYOUT_MEDIA={'media-spotify':{col:4,row:0},'media-ia':{col:4,row:0}};
 const COL_CLASSES=['col-2','col-3','col-4','col-5','col-6','col-7','col-8','col-9','col-10','col-11','col-12'];
 const ROW_CLASSES=['row-1','row-2','row-3','row-4','row-5','row-6','row-7','row-8','row-9','row-10','row-11','row-12','row-13','row-14','row-15','row-16','row-17','row-18','row-19','row-20'];
 
@@ -5130,7 +5203,7 @@ function getSearchIndex(){
   Object.values(proCustomPanels||{}).forEach(p=>{
     (p.apps||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:p.label||'Professionnel'}); });
   });
-  [['plex','Bibliothèque Plex'],['spotify','Spotify'],['ia','IA & Agenda']].forEach(([key,fb])=>{
+  [['spotify','Spotify'],['ia','IA & Agenda']].forEach(([key,fb])=>{
     (mediaApps[key]||[]).forEach(a=>{ if(a.name&&a.url) items.push({name:a.name,url:a.url,icon:a.icon||'link',category:sectionLabel(key,fb)}); });
   });
   Object.values(mediaCustomPanels||{}).forEach(p=>{
@@ -5670,6 +5743,7 @@ function renderTransport(){
 
 // ── Panneaux PRO custom ──
 let proCustomPanels=JSON.parse(localStorage.getItem('majin_pro_custom')||'{}');
+Object.values(proCustomPanels).forEach(p=>{p._editing=false;});
 function renderProCustomPanels(){
   const container=document.getElementById('proCustomContainer');if(!container)return;
   // Supprimer uniquement les widgets custom existants (pas les widgets fixes)
@@ -5747,6 +5821,7 @@ function editProCustomHeader(el,key){
 
 // ── Panneaux MEDIA custom ──
 let mediaCustomPanels=JSON.parse(localStorage.getItem('majin_media_custom')||'{}');
+Object.values(mediaCustomPanels).forEach(p=>{p._editing=false;});
 function renderMediaCustomPanels(){
   const container=document.getElementById('mediaCustomContainer');if(!container)return;
   document.querySelectorAll('#tab-media .dash-widget[data-wid^="media-custom-"]').forEach(w=>w.remove());
@@ -5854,7 +5929,6 @@ function saveNewCat(){
 }
 function renderMedia(){
   const panels=[
-    {key:'plex',    toggleId:'plexViewToggle',    data:mediaApps.plex},
     {key:'spotify', toggleId:'spotifyViewToggle',  data:mediaApps.spotify},
     {key:'ia',      toggleId:'iaViewToggle',       data:mediaApps.ia}
   ];
@@ -6480,7 +6554,6 @@ function buildMoveOptions(currentKey){
   });
   // Médias fixe
   const MEDIA_FIXED=[
-    {key:'media-plex',label:'🎬 Médias — Plex'},
     {key:'media-spotify',label:'🎬 Médias — Spotify'},
     {key:'media-ia',label:'🎬 Médias — IA & Agenda'},
   ];
@@ -7282,7 +7355,7 @@ const PREF_KEYS = [
   'majin_media','majin_pro_custom','majin_media_custom',
   'majin_headers','majin_cat_labels',
   'majin_view_modes',
-  'majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
+  'majin_dash_layout_home','majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
   'majin_cities','majin_weather_src','majin_weather_src_url',
   'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_notes','majin_gmail',
   'majin_local_desktop_apps',
