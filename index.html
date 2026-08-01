@@ -403,24 +403,31 @@ body.dash-edit-active /* EN-TÊTE MODIFIABLE */
 .mic-btn.on{background:var(--r);color:#fff;animation:glow-pulse 1.8s ease-in-out infinite;}
 .mic-btn:active{transform:scale(.92);}
 
-/* ── tabs ── */
+/* ── tabs — sélecteur segmenté (console) ── */
+.tabs{
+  display:flex;padding:6px;gap:4px;background:rgba(15,12,18,0.5);
+  border-bottom:1px solid var(--maj-bd,var(--bor));
+}
 .tab{
-  padding:10px 18px;font-size:13px;font-weight:700;letter-spacing:1px;
-  cursor:pointer;color:var(--mut);border-bottom:3px solid transparent;
-  transition:color .2s,border-color .2s,background .2s;
-  background:none;border-top:none;border-left:none;border-right:none;
-  font-family:var(--font);
+  padding:10px 18px;font-size:12.5px;font-weight:800;letter-spacing:1.6px;
+  cursor:pointer;color:var(--mut);border:1px solid transparent;border-radius:10px;
+  transition:color .2s,background .2s,border-color .2s,box-shadow .2s,transform .15s;
+  background:none;font-family:var(--font);
 }
-.tab::before{
-  content:'';position:absolute;bottom:0;left:50%;right:50%;
-  height:3px;background:var(--r);border-radius:2px;
-  transition:left .25s ease,right .25s ease;pointer-events:none;
+.tab::before{content:none;}
+.tab:hover{color:var(--txt);background:rgba(255,255,255,0.05);}
+.tab.on{
+  color:var(--r);background:rgba(var(--r-rgb),0.12);
+  border-color:rgba(var(--r-rgb),0.4);
+  box-shadow:inset 0 0 0 1px rgba(var(--r-rgb),0.15),0 0 16px rgba(var(--r-rgb),0.18);
 }
-.tab:hover{color:var(--txt);background:rgba(226,74,74,.05);}
-.tab:hover::before{left:10%;right:10%;}
-.tab.on{color:var(--r);}
-.tab.on::before{left:0;right:0;}
+.tab.on::before{content:none;}
 .tab:active{transform:scale(.97);}
+.tab-ic{margin-right:7px;font-size:15px;vertical-align:-2px;}
+@media (max-width:720px){.tab{padding:9px 8px;letter-spacing:.6px;font-size:11px;}.tab-ic{margin-right:4px;}}
+
+/* ── Applications : fusion complète (Personnel / Pro / Médias), sans séparation ── */
+:root{--gold:#f0b429;--cyan:#38bdf8;}
 
 /* ── sug (suggestions chat) ── */
 .sug{
@@ -743,6 +750,9 @@ body.is-electron .electron-close-btn{display:flex;}
   min-height:0;
   align-content:start;
 }
+#tab-apps{overflow-y:auto;overflow-x:hidden;}
+#tab-apps .dashboard-grid{flex:none;overflow:visible;min-height:auto;padding:14px 18px 4px;}
+#tab-apps .dashboard-grid:last-of-type{padding-bottom:32px;}
 .dash-widget{
   position:relative;
   min-height:80px;
@@ -1195,6 +1205,10 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Thème clair / sombre">
       <div class="theme-toggle-knob" id="themeKnob">🌙</div>
     </button>
+    <!-- DASHBOARD EDIT TOGGLE (home) -->
+    <button class="compact-toggle" id="dashEditBtnHome" onclick="toggleDashEditHome()" title="Disposition libre — Accueil" style="display:none;">
+      <i class="ti ti-home"></i>
+    </button>
     <!-- DASHBOARD EDIT TOGGLE (perso) -->
     <button class="compact-toggle" id="dashEditBtn" onclick="toggleDashEdit()" title="Disposition libre — Personnel" style="display:none;">
       <i class="ti ti-layout-dashboard"></i>
@@ -1255,19 +1269,18 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab on" onclick="swTab(this,'perso')">Personnel<span class="tab-event-badge" id="tabBadgePerso" title="Événement à venir"></span></button>
-  <button class="tab" onclick="swTab(this,'pro')">Professionnel</button>
-  <button class="tab" onclick="swTab(this,'media')">Médias</button>
-  <button class="tab" onclick="swTab(this,'cfg')">Paramètres</button>
+  <button class="tab on" onclick="swTab(this,'home')"><i class="ti ti-home tab-ic"></i>Accueil<span class="tab-event-badge" id="tabBadgePerso" title="Événement à venir"></span></button>
+  <button class="tab" onclick="swTab(this,'apps')"><i class="ti ti-apps tab-ic"></i>Applications</button>
+  <button class="tab" onclick="swTab(this,'cfg')"><i class="ti ti-settings tab-ic"></i>Paramètres</button>
 </div>
 
-<!-- ===== PERSO ===== -->
-<div class="dash-mode-bar hidden" id="dashModeBar">
+<!-- ===== ACCUEIL ===== -->
+<div class="dash-mode-bar hidden" id="dashModeBarHome">
   <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEdit()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayout()">↺ Réinitialiser</button>
+  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditHome()">✓ Terminer</button>
+  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutHome()">↺ Réinitialiser</button>
 </div>
-<div class="content dashboard-grid" id="tab-perso" style="display:grid;">
+<div class="content dashboard-grid" id="tab-home" style="display:grid;">
 
   <!-- MÉTÉO -->
   <div class="dash-widget col-4" id="dw-weather" data-wid="weather">
@@ -1357,10 +1370,22 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
         <button onclick="stopTTS()" title="Arrêter la parole" style="background:none;border:1px solid rgba(226,74,74,0.3);border-radius:6px;width:26px;height:26px;color:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;" onmouseenter="this.style.borderColor='var(--r)'" onmouseleave="this.style.borderColor='rgba(226,74,74,0.3)'"><i class="ti ti-player-stop"></i></button>
       </div>
       <div class="chat-area" id="chatArea">
-        <div class="msg"><div class="avt">M</div><div class="bbl">Bienvenue Najim, je suis <strong>majaïne</strong> ton assistant personnel, on commence par quoi aujourd'hui ?</div></div>
+        <div class="msg"><div class="avt">M</div><div class="bbl">Bienvenue Najim, je suis <strong>majaayïne</strong>, ton assistant personnel. Je suis là pour toi ! Prêt à laisser exprimer ta créativité aujourd'hui ?</div></div>
       </div>
     </div>
   </div>
+
+
+</div>
+
+<!-- ===== APPLICATIONS (fusion Personnel / Professionnel / Médias — défilement unique) ===== -->
+<div class="content" id="tab-apps" style="display:none;flex-direction:column;padding:0;">
+<div class="dash-mode-bar hidden" id="dashModeBar">
+  <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
+  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEdit()">✓ Terminer</button>
+  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayout()">↺ Réinitialiser</button>
+</div>
+<div class="content dashboard-grid" id="tab-perso" style="display:grid;">
 
   <!-- APPS PERSO -->
   <!-- APPLICATIONS PERSO — un widget par catégorie -->
@@ -1448,7 +1473,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
   <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditPro()">✓ Terminer</button>
   <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutPro()">↺ Réinitialiser</button>
 </div>
-<div class="content dashboard-grid" id="tab-pro" style="display:none;">
+<div class="content dashboard-grid" id="tab-pro" style="display:grid;">
 
   <!-- M365 -->
   <div class="dash-widget col-8" id="dw-pro-m365" data-wid="pro-m365">
@@ -1521,7 +1546,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
   <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditMedia()">✓ Terminer</button>
   <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutMedia()">↺ Réinitialiser</button>
 </div>
-<div class="content dashboard-grid" id="tab-media" style="display:none;">
+<div class="content dashboard-grid" id="tab-media" style="display:grid;">
 
   <!-- PLEX -->
   <div class="dash-widget col-4" id="dw-media-plex" data-wid="media-plex">
@@ -1584,6 +1609,8 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
       <i class="ti ti-layout-grid-add" style="font-size:16px;margin-right:6px;"></i> Nouveau panneau
     </button>
   </div>
+
+</div>
 
 </div>
 
@@ -2763,14 +2790,17 @@ function applyTheme(){
 }
 
 // ===== DASHBOARD DRAG & RESIZE =====
+let dashEditModeHome=false;
 let dashEditMode=false;
 let dashEditModePro=false;
 let dashEditModeMedia=false;
+let dashLayoutHome=JSON.parse(localStorage.getItem('majin_dash_layout_home')||'null')||null;
 let dashLayout=JSON.parse(localStorage.getItem('majin_dash_layout')||'null')||null;
 let dashLayoutPro=JSON.parse(localStorage.getItem('majin_dash_layout_pro')||'null')||null;
 let dashLayoutMedia=JSON.parse(localStorage.getItem('majin_dash_layout_media')||'null')||null;
 
-const DEFAULT_LAYOUT={'weather':{col:4,row:0},'cal':{col:4,row:0},'ai':{col:4,row:0},'perso-sante':{col:4,row:0},'perso-services':{col:4,row:0},'perso-reseaux':{col:4,row:0},'perso-ecommerce':{col:4,row:0},'perso-sport':{col:4,row:0},'perso-addcat':{col:4,row:0}};
+const DEFAULT_LAYOUT_HOME={'weather':{col:4,row:0},'cal':{col:4,row:0},'ai':{col:4,row:0}};
+const DEFAULT_LAYOUT={'perso-sante':{col:4,row:0},'perso-services':{col:4,row:0},'perso-reseaux':{col:4,row:0},'perso-ecommerce':{col:4,row:0},'perso-sport':{col:4,row:0},'perso-addcat':{col:4,row:0}};
 const DEFAULT_LAYOUT_PRO={'pro-m365':{col:8,row:0},'pro-collab':{col:4,row:0},'pro-transport':{col:8,row:0}};
 const DEFAULT_LAYOUT_MEDIA={'media-plex':{col:4,row:0},'media-spotify':{col:4,row:0},'media-ia':{col:4,row:0}};
 const COL_CLASSES=['col-2','col-3','col-4','col-5','col-6','col-7','col-8','col-9','col-10','col-11','col-12'];
@@ -2796,6 +2826,21 @@ function deleteWidget(wid){
 
 // Activer/désactiver l'affichage des boutons supprimer widget via une classe body
 // ===== TOGGLE DISPOSITION (DASHBOARD EDIT MODE) =====
+function toggleDashEditHome(){
+  dashEditModeHome=!dashEditModeHome;
+  const bar=document.getElementById('dashModeBarHome');
+  const btn=document.getElementById('dashEditBtnHome');
+  if(bar)bar.classList.toggle('hidden',!dashEditModeHome);
+  if(btn)btn.classList.toggle('on',dashEditModeHome);
+  document.querySelectorAll('#tab-home .dash-widget').forEach(w=>{
+    w.draggable=dashEditModeHome;
+    const h=w.querySelector('.drag-handle');const r=w.querySelector('.resize-handle');
+    if(h)h.style.display=dashEditModeHome?'flex':'none';
+    if(r)r.style.display=dashEditModeHome?'flex':'none';
+    injectDeleteBtn(w, dashEditModeHome);
+  });
+}
+
 function toggleDashEdit(){
   dashEditMode=!dashEditMode;
   const bar=document.getElementById('dashModeBar');
@@ -2870,9 +2915,16 @@ function saveDashLayout(tabId){
     const rowCls=ROW_CLASSES.find(c=>w.classList.contains(c))||null;
     layout[wid]={col:parseInt(colCls.replace('col-','')),row:rowCls?parseInt(rowCls.replace('row-','')):0};
   });
-  if(tabId==='perso'){dashLayout=layout;localStorage.setItem('majin_dash_layout',JSON.stringify(layout));}
+  if(tabId==='home'){dashLayoutHome=layout;localStorage.setItem('majin_dash_layout_home',JSON.stringify(layout));}
+  else if(tabId==='perso'){dashLayout=layout;localStorage.setItem('majin_dash_layout',JSON.stringify(layout));}
   else if(tabId==='pro'){dashLayoutPro=layout;localStorage.setItem('majin_dash_layout_pro',JSON.stringify(layout));}
   else if(tabId==='media'){dashLayoutMedia=layout;localStorage.setItem('majin_dash_layout_media',JSON.stringify(layout));}
+}
+
+function resetDashLayoutHome(){
+  dashLayoutHome=null;
+  localStorage.removeItem('majin_dash_layout_home');
+  applyDashLayout(DEFAULT_LAYOUT_HOME,'home');
 }
 
 function resetDashLayout(){
@@ -2906,6 +2958,7 @@ function applyDashLayout(layout,tabId){
 // Drag & Drop — générique par tab
 let dragSrc=null;
 function getEditingForTab(tabId){
+  if(tabId==='home')return dashEditModeHome;
   if(tabId==='perso')return dashEditMode;
   if(tabId==='pro')return dashEditModePro;
   if(tabId==='media')return dashEditModeMedia;
@@ -3113,6 +3166,7 @@ function initDashDragDrop(){
     dragState = null;
   });
 
+  bindWidgets('home');
   bindWidgets('perso');
   bindWidgets('pro');
   bindWidgets('media');
@@ -6767,15 +6821,19 @@ window.addEventListener('load',()=>{
   // ── Compact & Thème
   applyCompact();applyTheme();
   // ── Dashboard
+  if(dashLayoutHome)applyDashLayout(dashLayoutHome,'home');
+  else applyDashLayout(DEFAULT_LAYOUT_HOME,'home');
   if(dashLayout)applyDashLayout(dashLayout,'perso');
   if(dashLayoutPro)applyDashLayout(dashLayoutPro,'pro');
   else applyDashLayout(DEFAULT_LAYOUT_PRO,'pro');
   if(dashLayoutMedia)applyDashLayout(dashLayoutMedia,'media');
   else applyDashLayout(DEFAULT_LAYOUT_MEDIA,'media');
   initDashDragDrop();
-  const deb=document.getElementById('dashEditBtn');if(deb)deb.style.display='flex';
-  // pro edit btn starts hidden (shown when tab is pro)
+  // Accueil est l'onglet actif par défaut au chargement
+  const debHome=document.getElementById('dashEditBtnHome');if(debHome)debHome.style.display='flex';
+  const deb=document.getElementById('dashEditBtn');if(deb)deb.style.display='none';
   const debPro=document.getElementById('dashEditBtnPro');if(debPro)debPro.style.display='none';
+  const debMedia=document.getElementById('dashEditBtnMedia');if(debMedia)debMedia.style.display='none';
   // ── Fond & accentuation
 // Écran de veille
   restoreStandbySettings();
@@ -6800,7 +6858,7 @@ window.addEventListener('load',()=>{
   if(document.getElementById('ttsPitchVal'))document.getElementById('ttsPitchVal').textContent=ttsPitch;
   if(document.getElementById('ttsVolumeVal'))document.getElementById('ttsVolumeVal').textContent=Math.round(ttsVolume*100)+'%';
   if(!ttsEnabled){const btn=document.getElementById('ttsToggleBtn');if(btn)btn.innerHTML='<i class="ti ti-volume-off"></i>';}
-  setTimeout(()=>{renderVoiceSelector();majinSpeak('Bienvenue Najim, je suis majaïne ton assistant personnel, on commence par quoi aujourd\'hui ?');},600); // voix chargées après un délai
+  setTimeout(()=>{renderVoiceSelector();majinSpeak('Bienvenue Najim, je suis majaayïne, ton assistant personnel. Je suis là pour toi ! Prêt à laisser exprimer ta créativité aujourd\'hui ?');},600); // voix chargées après un délai
   // ── Météo
   const sws=localStorage.getItem('majin_weather_src_url');if(sws)weatherSourceUrl=sws;
   // ── News : chargement et restore UI
@@ -6918,27 +6976,35 @@ function setWallpaperOpacity(v){document.getElementById('wpOpacityVal').textCont
 function swTab(el,id){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
-  ['perso','pro','media','cfg'].forEach(k=>{
+  // 'apps' est la fusion visuelle de 3 grilles restées indépendantes en interne
+  // (perso/pro/media conservent chacune leur logique de disposition propre),
+  // mais regroupées dans #tab-apps qui porte l'unique barre de défilement.
+  ['home','apps','cfg'].forEach(k=>{
     const p=document.getElementById('tab-'+k);
     if(!p)return;
-    if(k==='perso'||k==='pro'||k==='media'){p.style.display=k===id?'grid':'none';}
-    else{p.style.display=k===id?'block':'none';}
+    if(k==='home'){p.style.display=id==='home'?'grid':'none';}
+    else if(k==='apps'){p.style.display=id==='apps'?'flex':'none';}
+    else{p.style.display=id===k?'block':'none';}
   });
   // dashModeBar visibility
+  const dmbHome=document.getElementById('dashModeBarHome');
+  if(dmbHome)dmbHome.style.display=id==='home'&&dashEditModeHome?'flex':'none';
   const dmb=document.getElementById('dashModeBar');
-  if(dmb)dmb.style.display=id==='perso'&&dashEditMode?'flex':'none';
+  if(dmb)dmb.style.display=id==='apps'&&dashEditMode?'flex':'none';
   const dmbPro=document.getElementById('dashModeBarPro');
-  if(dmbPro)dmbPro.style.display=id==='pro'&&dashEditModePro?'flex':'none';
+  if(dmbPro)dmbPro.style.display=id==='apps'&&dashEditModePro?'flex':'none';
   const dmbMedia=document.getElementById('dashModeBarMedia');
-  if(dmbMedia)dmbMedia.style.display=id==='media'&&dashEditModeMedia?'flex':'none';
+  if(dmbMedia)dmbMedia.style.display=id==='apps'&&dashEditModeMedia?'flex':'none';
   // edit buttons
+  const debHome=document.getElementById('dashEditBtnHome');
+  if(debHome)debHome.style.display=id==='home'?'flex':'none';
   const deb=document.getElementById('dashEditBtn');
-  if(deb)deb.style.display=id==='perso'?'flex':'none';
+  if(deb)deb.style.display=id==='apps'?'flex':'none';
   const debPro=document.getElementById('dashEditBtnPro');
-  if(debPro)debPro.style.display=id==='pro'?'flex':'none';
+  if(debPro)debPro.style.display=id==='apps'?'flex':'none';
   const debMedia=document.getElementById('dashEditBtnMedia');
-  if(debMedia)debMedia.style.display=id==='media'?'flex':'none';
-  if(id==='media'){renderMedia();renderMediaCustomPanels();}
+  if(debMedia)debMedia.style.display=id==='apps'?'flex':'none';
+  if(id==='apps'){renderMedia();renderMediaCustomPanels();}
   if(id==='cfg'){renderCitySettingsList();
 renderStandbyThemes();renderSavedRssFeeds();renderLocalDesktopApps();}
 }
