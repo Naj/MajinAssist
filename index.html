@@ -35,9 +35,9 @@ body>*{position:relative;z-index:1;}
 
 /* ── Optimisations performance ─────────────────────────────────────────── */
 /* will-change sur les éléments animés en continu */
-.clk,.hdr-date,.news-ticker-track,.wave canvas{will-change:transform,opacity;}
+.htc-clock,.htc-date,.news-ticker-track,.wave canvas{will-change:transform,opacity;}
 /* Pause des animations CSS via variable JS quand onglet masqué */
-.clk,.hdr-date,#logoSvg,.logo span,body::before{
+.htc-clock,.hdr-time-center,#logoSvg,.logo span,body::before{
   animation-play-state:var(--anim-state,running);
 }
 /* Optimisation rendu des panneaux avec backdrop-filter */
@@ -47,7 +47,30 @@ body>*{position:relative;z-index:1;}
 /* Réduction des repaint sur les particules standby */
 .sb-particle{will-change:transform,opacity;}
 /* HEADER */
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;border-bottom:1px solid var(--bor);flex-shrink:0;background:rgba(26,26,32,0.95);backdrop-filter:blur(6px);}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;border-bottom:1px solid var(--bor);flex-shrink:0;background:rgba(26,26,32,0.95);backdrop-filter:blur(6px);position:relative;}
+
+/* ── DATE & HEURE — bloc unique centré sur le bandeau ── */
+.hdr-time-center{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:16px;
+  padding:6px 24px;
+  background:rgba(226,74,74,0.05);
+  border:1px solid rgba(226,74,74,0.2);
+  border-radius:12px;
+  user-select:none;
+  white-space:nowrap;
+}
+.htc-date{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;gap:1px;}
+.htc-dow{font-family:var(--fonthud);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--r);}
+.htc-day{font-family:var(--fonthud);font-size:15px;font-weight:700;letter-spacing:1px;color:var(--txt);}
+.htc-divider{width:1px;height:28px;background:rgba(226,74,74,0.25);flex-shrink:0;}
+.htc-clock{display:flex;align-items:baseline;gap:1px;font-family:var(--fonthud);font-weight:700;color:var(--txt);}
+.htc-h,.htc-m{font-size:24px;letter-spacing:1px;}
+.htc-colon{font-size:24px;color:var(--r);margin:0 1px;animation:clk-blink 1s step-end infinite;}
+.htc-s{font-size:13px;color:var(--mut);align-self:flex-end;margin:0 0 3px 4px;letter-spacing:1px;}
+@media (max-width:900px){
+  .hdr-time-center{display:none;}
+}
 .logo{font-family:var(--fonthud);font-size:18px;font-weight:900;letter-spacing:6px;}.logo span{color:var(--r);}
 .hright{display:flex;align-items:center;gap:10px;}
 .ai-status{font-size:12px;padding:4px 12px;border:1px solid;border-radius:20px;font-weight:700;}
@@ -106,6 +129,8 @@ body>*{position:relative;z-index:1;}
   50%{box-shadow:0 0 14px 2px rgba(226,74,74,0.18);}
 }
 .clk{animation:clk-glow 6s ease-in-out infinite;}
+.clk-wide{padding:6px 22px;font-size:24px;letter-spacing:6px;}
+.clk-wide .clk-s{font-size:15px;letter-spacing:3px;}
 /* Flip chiffre au changement */
 @keyframes clk-digit-flip{
   0%  {opacity:0;transform:translateY(-6px) scaleY(0.7);}
@@ -150,6 +175,9 @@ body>*{position:relative;z-index:1;}
   100%{opacity:1;transform:translateY(0);}
 }
 .hdr-date-num{display:inline-block;}
+.hdr-date-wide{padding:6px 20px;}
+.hdr-date-wide .hdr-date-dow{font-size:10px;letter-spacing:4px;}
+.hdr-date-wide .hdr-date-num{font-size:16px;letter-spacing:2px;}
 
 /* WAVE — plus grand + choix d'effets */
 .wave{height:80px;background:rgba(26,26,32,0.92);border-bottom:1px solid var(--bor);position:relative;flex-shrink:0;overflow:hidden;contain:strict;}
@@ -424,6 +452,7 @@ body.dash-edit-active /* EN-TÊTE MODIFIABLE */
 .tab.on::before{content:none;}
 .tab:active{transform:scale(.97);}
 .tab-ic{margin-right:7px;font-size:15px;vertical-align:-2px;}
+.addcat-sec-btn.on{color:var(--r);border-color:var(--r);background:rgba(var(--r-rgb),0.12);}
 @media (max-width:720px){.tab{padding:9px 8px;letter-spacing:.6px;font-size:11px;}.tab-ic{margin-right:4px;}}
 
 /* ── Applications : fusion complète (Personnel / Pro / Médias), sans séparation ── */
@@ -994,7 +1023,7 @@ body.dash-editing-media .drag-handle{opacity:1;}
    Ce bloc surcharge uniquement l'apparence (couleurs, flou, ombres, radius).
 ═══════════════════════════════════════════════════════════════════════ */
 :root{
-  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.05),rgba(255,255,255,0.004) 50%),rgba(15,12,18,0.78);
+  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.04),rgba(255,255,255,0.003) 50%),rgba(15,12,18,0.42);
   --maj-bd:rgba(var(--r-rgb),0.4);
   --maj-rad:20px;
   --maj-blur:blur(11px) saturate(1.3);
@@ -1003,7 +1032,7 @@ body.dash-editing-media .drag-handle{opacity:1;}
   --maj-bg-grad:radial-gradient(135% 90% at 50% -10%,rgba(var(--r-rgb),0.12),transparent 55%),#060509;
 }
 :root.light{
-  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.95),rgba(255,255,255,0.7)),rgba(252,250,253,0.86);
+  --maj-panel:linear-gradient(158deg,rgba(255,255,255,0.55),rgba(255,255,255,0.35)),rgba(252,250,253,0.48);
   --maj-bd:rgba(var(--r-rgb),0.32);
   --maj-glow:0 0 30px rgba(var(--r-rgb),0.12),0 18px 48px rgba(120,90,140,0.16);
   --maj-glow-hi:0 0 0 1px rgba(var(--r-rgb),0.42),0 0 38px rgba(var(--r-rgb),0.2),0 20px 50px rgba(120,90,140,0.2);
@@ -1196,6 +1225,18 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     </div>
   </div>
 
+  <!-- DATE & HEURE — bloc unique, centré sur le bandeau -->
+  <div class="hdr-time-center" id="hdrTimeCenter">
+    <div class="htc-date" id="dateStat">
+      <span class="htc-dow" id="dateDow">—</span>
+      <span class="htc-day" id="dateNum">—</span>
+    </div>
+    <div class="htc-divider"></div>
+    <div class="htc-clock" id="clk">
+      <span class="htc-h" id="clkH">--</span><span class="htc-colon">:</span><span class="htc-m" id="clkM">--</span><span class="htc-s" id="clkS">--</span>
+    </div>
+  </div>
+
   <div class="hright">
     <!-- COMPACT TOGGLE -->
     <button class="compact-toggle" id="compactBtn" onclick="toggleCompact()" title="Mode compact / étendu">
@@ -1205,30 +1246,11 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Thème clair / sombre">
       <div class="theme-toggle-knob" id="themeKnob">🌙</div>
     </button>
-    <!-- DASHBOARD EDIT TOGGLE (home) -->
-    <button class="compact-toggle" id="dashEditBtnHome" onclick="toggleDashEditHome()" title="Disposition libre — Accueil" style="display:none;">
-      <i class="ti ti-home"></i>
-    </button>
-    <!-- DASHBOARD EDIT TOGGLE (perso) -->
-    <button class="compact-toggle" id="dashEditBtn" onclick="toggleDashEdit()" title="Disposition libre — Personnel" style="display:none;">
+    <!-- DASHBOARD EDIT TOGGLE — unique, contextuel à l'onglet actif -->
+    <button class="compact-toggle" id="dashEditBtn" onclick="toggleLayoutEdit()" title="Disposition libre" style="display:none;">
       <i class="ti ti-layout-dashboard"></i>
     </button>
-    <!-- DASHBOARD EDIT TOGGLE (pro) -->
-    <button class="compact-toggle" id="dashEditBtnPro" onclick="toggleDashEditPro()" title="Disposition libre — Professionnel" style="display:none;">
-      <i class="ti ti-briefcase"></i>
-    </button>
-    <!-- DASHBOARD EDIT TOGGLE (media) -->
-    <button class="compact-toggle" id="dashEditBtnMedia" onclick="toggleDashEditMedia()" title="Disposition libre — Médias" style="display:none;">
-      <i class="ti ti-device-tv"></i>
-    </button>
-    <div class="ai-status ai-err" id="gstatus">Groq LLaMA 3.3 — non connecté</div>
-    <div class="hdr-date" id="dateStat">
-      <span class="hdr-date-dow" id="dateDow">—</span>
-      <span class="hdr-date-num" id="dateNum">—</span>
-    </div>
-    <div class="clk" id="clk">
-      <span class="clk-h" id="clkH">--</span><span class="clk-sep">:</span><span class="clk-m" id="clkM">--</span><span class="clk-sep">:</span><span class="clk-s" id="clkS">--</span>
-    </div>
+    <div class="ai-status ai-err" id="gstatus" style="display:none;">Groq LLaMA 3.3 — non connecté</div>
     <!-- STANDBY TOGGLE -->
     <button class="compact-toggle" id="standbyBtn" onclick="enterStandby()" title="Mode veille" style="position:relative;">
       <i class="ti ti-player-pause"></i>
@@ -1380,10 +1402,10 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- ===== APPLICATIONS (fusion Personnel / Professionnel / Médias — défilement unique) ===== -->
 <div class="content" id="tab-apps" style="display:none;flex-direction:column;padding:0;">
-<div class="dash-mode-bar hidden" id="dashModeBar">
+<div class="dash-mode-bar hidden" id="dashModeBarApps">
   <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEdit()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayout()">↺ Réinitialiser</button>
+  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleLayoutEdit()">✓ Terminer</button>
+  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayout();resetDashLayoutPro();resetDashLayoutMedia();">↺ Réinitialiser</button>
 </div>
 <div class="content dashboard-grid" id="tab-perso" style="display:grid;">
 
@@ -1457,22 +1479,9 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
   <!-- Catégories custom PERSO — chacune dans son propre dash-widget, injectées dynamiquement -->
   <div id="persoCustomContainer" style="display:contents;"></div>
 
-  <!-- Bouton Nouvelle catégorie — widget indépendant -->
-  <div class="dash-widget col-4" id="dw-perso-addcat" data-wid="perso-addcat" style="min-height:70px;display:flex;align-items:center;justify-content:center;">
-    <div class="drag-handle" title="Déplacer">⠿</div>
-    <button class="btn-ghost" style="font-size:13px;border-style:dashed;padding:16px 24px;width:calc(100% - 32px);" onclick="openAddCatModal('perso')">
-      <i class="ti ti-folder-plus" style="font-size:16px;margin-right:6px;"></i> Nouvelle catégorie
-    </button>
-  </div>
-
 </div>
 
 <!-- ===== PRO ===== -->
-<div class="dash-mode-bar hidden" id="dashModeBarPro">
-  <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditPro()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutPro()">↺ Réinitialiser</button>
-</div>
 <div class="content dashboard-grid" id="tab-pro" style="display:grid;">
 
   <!-- M365 -->
@@ -1529,23 +1538,9 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
   <!-- PANNEAUX PRO CUSTOM — rendus dynamiquement, chacun dans son propre dash-widget -->
   <div id="proCustomContainer" style="display:contents;"></div>
 
-  <!-- Bouton Nouveau panneau PRO -->
-  <div class="dash-widget col-4" id="dw-pro-addcat" data-wid="pro-addcat" style="min-height:70px;display:flex;align-items:center;justify-content:center;">
-    <div class="drag-handle" title="Déplacer">⠿</div>
-    <button class="btn-ghost" style="font-size:13px;border-style:dashed;padding:16px 24px;width:calc(100% - 32px);" onclick="openAddCatModal('pro')">
-      <i class="ti ti-layout-grid-add" style="font-size:16px;margin-right:6px;"></i> Nouveau panneau
-    </button>
-  </div>
-
 </div>
 
 <!-- ===== MEDIA ===== -->
-<!-- BARRE MODE ÉDITION MEDIA -->
-<div class="dash-mode-bar hidden" id="dashModeBarMedia">
-  <i class="ti ti-arrows-move"></i> MODE DISPOSITION (Médias) — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditMedia()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutMedia()">↺ Réinitialiser</button>
-</div>
 <div class="content dashboard-grid" id="tab-media" style="display:grid;">
 
   <!-- PLEX -->
@@ -1602,14 +1597,13 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
   <!-- PANNEAUX MEDIA CUSTOM — rendus dynamiquement, chacun dans son propre dash-widget -->
   <div id="mediaCustomContainer" style="display:contents;"></div>
 
-  <!-- Bouton Nouveau panneau MEDIA -->
-  <div class="dash-widget col-4" id="dw-media-addcat" data-wid="media-addcat" style="min-height:70px;display:flex;align-items:center;justify-content:center;">
-    <div class="drag-handle" title="Déplacer">⠿</div>
-    <button class="btn-ghost" style="font-size:13px;border-style:dashed;padding:16px 24px;width:calc(100% - 32px);" onclick="openAddCatModal('media')">
-      <i class="ti ti-layout-grid-add" style="font-size:16px;margin-right:6px;"></i> Nouveau panneau
-    </button>
-  </div>
+</div>
 
+<!-- Bouton unique Nouvelle catégorie / panneau — fin de page -->
+<div style="padding:0 18px 24px;">
+  <button class="btn-ghost" style="font-size:13px;border-style:dashed;padding:16px 24px;width:100%;" onclick="openAddCatModal()">
+    <i class="ti ti-folder-plus" style="font-size:16px;margin-right:6px;"></i> Nouvelle catégorie / panneau
+  </button>
 </div>
 
 </div>
@@ -1917,12 +1911,11 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- STATUS BAR -->
 <div class="stbar">
-  <span><i class="ti ti-sparkles"></i> IA <span class="val" id="modelStat">—</span></span>
+  <span><i class="ti ti-clock"></i> <span class="val" id="stbarClk">--:--:--</span></span>
+  <span><i class="ti ti-calendar-event"></i> <span class="val" id="stbarDate">—</span></span>
   <span><i class="ti ti-cloud"></i> <span class="val" id="weatherStat">Chargement…</span></span>
-  <span><i class="ti ti-calendar"></i> <span class="val">Google Agenda</span></span>
   <div style="flex:1;"></div>
-  <span><i class="ti ti-brand-microsoft"></i> M365 <span class="val">Connecté</span></span>
-  <span><i class="ti ti-server-2"></i> Plex <span class="val">Local</span></span>
+  <span style="display:none;"><i class="ti ti-sparkles"></i> IA <span class="val" id="modelStat">—</span></span>
 </div>
 
 <!-- MODALS -->
@@ -2161,6 +2154,14 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 <div class="modal" id="addCatModal">
   <div class="modal-box">
     <div class="modal-title" id="addCatModalTitle">➕ Ajouter une catégorie<button class="modal-close" onclick="closeModal('addCatModal')">✕</button></div>
+    <div class="field">
+      <label>Section</label>
+      <div style="display:flex;gap:6px;" id="addCatSectionPicker">
+        <button type="button" class="btn-ghost addcat-sec-btn on" data-sec="perso" onclick="setAddCatSection('perso',this)" style="flex:1;"><i class="ti ti-user"></i> Personnel</button>
+        <button type="button" class="btn-ghost addcat-sec-btn" data-sec="pro" onclick="setAddCatSection('pro',this)" style="flex:1;"><i class="ti ti-briefcase"></i> Pro</button>
+        <button type="button" class="btn-ghost addcat-sec-btn" data-sec="media" onclick="setAddCatSection('media',this)" style="flex:1;"><i class="ti ti-device-tv"></i> Médias</button>
+      </div>
+    </div>
     <div class="field"><label>Nom de la catégorie / panneau</label><input id="addCatName" placeholder="Ex : Banque, Gaming, YouTube…"/></div>
     <div class="field"><label>Icône <span style="font-weight:400;font-size:11px;">(nom tabler-icons.io)</span></label>
       <input id="addCatIcon" placeholder="Ex : folder, device-gamepad, brand-youtube" value="folder"/>
@@ -4285,6 +4286,12 @@ function tick(){
     elNum.style.animation='none';elNum.textContent=num;void elNum.offsetWidth;
     elNum.style.animation='date-day-in .4s ease .05s both';
   }
+
+  // Horloge & date du bandeau du bas
+  const stClk=document.getElementById('stbarClk');
+  if(stClk)stClk.textContent=hh+':'+mm+':'+ss;
+  const stDate=document.getElementById('stbarDate');
+  if(stDate)stDate.textContent=n.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 }
 tick();setInterval(tick,1000);
 
@@ -5806,13 +5813,21 @@ function deleteMediaCustomPanel(key){
 
 // ── Modale ajout catégorie/panneau ──
 let addCatTarget='perso';
+const ADDCAT_LABELS={perso:'une catégorie (Personnel)',pro:'un panneau (Professionnel)',media:'un panneau (Médias)'};
+function setAddCatSection(sec,btn){
+  addCatTarget=sec;
+  document.querySelectorAll('.addcat-sec-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const title=document.getElementById('addCatModalTitle');
+  if(title)title.textContent='➕ Ajouter '+ADDCAT_LABELS[sec];
+}
 function openAddCatModal(target){
-  addCatTarget=target;
+  const sec=target||addCatTarget||'perso';
+  const picker=document.getElementById('addCatSectionPicker');
+  const btn=picker?picker.querySelector('[data-sec="'+sec+'"]'):null;
+  setAddCatSection(sec,btn);
   document.getElementById('addCatName').value='';
   document.getElementById('addCatIcon').value='folder';
-  const title=document.getElementById('addCatModalTitle');
-  const labels={perso:'une catégorie (Personnel)',pro:'un panneau (Professionnel)',media:'un panneau (Médias)'};
-  if(title)title.textContent='➕ Ajouter '+labels[target];
   document.getElementById('addCatModal').classList.add('open');
 }
 function saveNewCat(){
@@ -6830,10 +6845,7 @@ window.addEventListener('load',()=>{
   else applyDashLayout(DEFAULT_LAYOUT_MEDIA,'media');
   initDashDragDrop();
   // Accueil est l'onglet actif par défaut au chargement
-  const debHome=document.getElementById('dashEditBtnHome');if(debHome)debHome.style.display='flex';
-  const deb=document.getElementById('dashEditBtn');if(deb)deb.style.display='none';
-  const debPro=document.getElementById('dashEditBtnPro');if(debPro)debPro.style.display='none';
-  const debMedia=document.getElementById('dashEditBtnMedia');if(debMedia)debMedia.style.display='none';
+  const deb=document.getElementById('dashEditBtn');if(deb)deb.style.display='flex';
   // ── Fond & accentuation
 // Écran de veille
   restoreStandbySettings();
@@ -6973,9 +6985,11 @@ function clearWallpaper(){
 function setWallpaperOpacity(v){document.getElementById('wpOpacityVal').textContent=v+'%';let s=document.getElementById('wpOpacityStyle');if(!s){s=document.createElement('style');s.id='wpOpacityStyle';document.head.appendChild(s);}const op=(parseInt(v)/100).toFixed(2);s.textContent=`body::before{opacity:${op}!important;}.maj-wp-logo-layer{opacity:${op}!important;}`;localStorage.setItem('majin_wp_opacity',v);}
 
 // ===== TABS =====
+let currentTabId='home';
 function swTab(el,id){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
+  currentTabId=id;
   // 'apps' est la fusion visuelle de 3 grilles restées indépendantes en interne
   // (perso/pro/media conservent chacune leur logique de disposition propre),
   // mais regroupées dans #tab-apps qui porte l'unique barre de défilement.
@@ -6986,27 +7000,38 @@ function swTab(el,id){
     else if(k==='apps'){p.style.display=id==='apps'?'flex':'none';}
     else{p.style.display=id===k?'block':'none';}
   });
-  // dashModeBar visibility
+  // barre "mode disposition" — une seule, contextuelle
   const dmbHome=document.getElementById('dashModeBarHome');
   if(dmbHome)dmbHome.style.display=id==='home'&&dashEditModeHome?'flex':'none';
-  const dmb=document.getElementById('dashModeBar');
-  if(dmb)dmb.style.display=id==='apps'&&dashEditMode?'flex':'none';
-  const dmbPro=document.getElementById('dashModeBarPro');
-  if(dmbPro)dmbPro.style.display=id==='apps'&&dashEditModePro?'flex':'none';
-  const dmbMedia=document.getElementById('dashModeBarMedia');
-  if(dmbMedia)dmbMedia.style.display=id==='apps'&&dashEditModeMedia?'flex':'none';
-  // edit buttons
-  const debHome=document.getElementById('dashEditBtnHome');
-  if(debHome)debHome.style.display=id==='home'?'flex':'none';
+  const dmbApps=document.getElementById('dashModeBarApps');
+  if(dmbApps)dmbApps.style.display=id==='apps'&&dashEditMode?'flex':'none';
+  // bouton "disposition libre" — un seul, visible sur Accueil et Applications
   const deb=document.getElementById('dashEditBtn');
-  if(deb)deb.style.display=id==='apps'?'flex':'none';
-  const debPro=document.getElementById('dashEditBtnPro');
-  if(debPro)debPro.style.display=id==='apps'?'flex':'none';
-  const debMedia=document.getElementById('dashEditBtnMedia');
-  if(debMedia)debMedia.style.display=id==='apps'?'flex':'none';
+  if(deb){
+    deb.style.display=(id==='home'||id==='apps')?'flex':'none';
+    deb.classList.toggle('on',id==='home'?dashEditModeHome:dashEditMode);
+  }
   if(id==='apps'){renderMedia();renderMediaCustomPanels();}
   if(id==='cfg'){renderCitySettingsList();
 renderStandbyThemes();renderSavedRssFeeds();renderLocalDesktopApps();}
+}
+
+// Bouton unique "disposition libre" : agit sur l'onglet actuellement affiché.
+// Sur Accueil il pilote la grille home ; sur Applications il pilote les 3
+// grilles fusionnées (perso/pro/media) et leur barre de contrôle commune.
+function toggleLayoutEdit(){
+  const btn=document.getElementById('dashEditBtn');
+  if(currentTabId==='home'){
+    toggleDashEditHome();
+    if(btn)btn.classList.toggle('on',dashEditModeHome);
+  } else if(currentTabId==='apps'){
+    toggleDashEdit();
+    toggleDashEditPro();
+    toggleDashEditMedia();
+    const bar=document.getElementById('dashModeBarApps');
+    if(bar)bar.classList.toggle('hidden',!dashEditMode);
+    if(btn)btn.classList.toggle('on',dashEditMode);
+  }
 }
 
 // ===== LANCEUR LOCAL SANS ELECTRON (protocoles dédiés par appli) =====
