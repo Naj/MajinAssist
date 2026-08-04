@@ -981,6 +981,31 @@ body.is-electron .electron-close-btn{display:flex;}
   border-radius:0 0 5px 0;
 }
 .dash-widget{overflow:hidden;} /* clip la poignée dans le widget */
+
+/* ── Réduction de panneau (Paramètres) ── */
+.card-collapse-btn{
+  background:none;border:none;cursor:pointer;flex-shrink:0;
+  width:22px;height:22px;border-radius:6px;margin-left:4px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--mut);transition:background .15s,color .15s;
+}
+.card-collapse-btn:hover{background:rgba(255,121,0,0.14);color:#FF7900;}
+.card-collapse-btn i{font-size:14px;}
+#tab-cfg .pan.card-collapsed{margin-bottom:10px;}
+#tab-cfg .pan.card-collapsed>*:not(.pan-title){display:none;}
+#tab-cfg .pan.card-collapsed .pan-title{margin-bottom:0;}
+
+/* ── En-têtes de carte — colorimétrie inspirée de la charte Orange ── */
+.pan-title i:first-child{color:var(--hdr-accent,#FF7900);}
+#tab-home .pan-title i:first-child{color:#FF7900;}
+#dw-weather .pan-title i:first-child{color:#4BB4E6;}
+#dw-notes .pan-title i:first-child{color:#FFD200;}
+#dw-cal .pan-title i:first-child{color:#50BE87;}
+#dw-reminders .pan-title i:first-child{color:#FF8AD4;}
+#dw-ai .pan-title i:first-child{color:#A885D8;}
+#tab-perso .pan-title i:first-child{color:#FF7900;}
+#tab-pro .pan-title i:first-child{color:#085EBD;}
+#tab-media .pan-title i:first-child{color:#0A6E31;}
 .dash-widget:hover .drag-handle,
 .dash-widget:hover .resize-handle,
 body.dash-editing .resize-handle,
@@ -2978,6 +3003,53 @@ function injectDeleteBtn(widget, show){
   } else {
     if(btn) btn.style.display = 'none';
   }
+}
+
+// ── Réduction de panneau (Paramètres uniquement) ────────────────
+// Note : la réduction de carte a été tentée sur les grilles Accueil/
+// Applications mais entrait en conflit avec le système de disposition
+// libre (drag & drop, redimensionnement par lignes de grille) — retirée
+// de ces onglets. Sur Paramètres, les panneaux sont de simples blocs
+// empilés (pas de grille CSS), donc le repliage s'y fait proprement.
+const CARD_COLLAPSE_KEY='majin_card_collapsed';
+function getCollapsedMap(){
+  try{return JSON.parse(localStorage.getItem(CARD_COLLAPSE_KEY)||'{}');}catch{return {};}
+}
+function setCardCollapsed(key,collapsed){
+  const map=getCollapsedMap();
+  if(collapsed)map[key]=true;else delete map[key];
+  localStorage.setItem(CARD_COLLAPSE_KEY,JSON.stringify(map));
+}
+function toggleSettingsCollapse(panel,key){
+  const collapsed=panel.classList.toggle('card-collapsed');
+  const ic=panel.querySelector('.card-collapse-btn i');
+  if(ic)ic.className=collapsed?'ti ti-chevron-down':'ti ti-chevron-up';
+  const btn=panel.querySelector('.card-collapse-btn');
+  if(btn)btn.title=collapsed?'Déplier le panneau':'Réduire le panneau';
+  setCardCollapsed(key,collapsed);
+}
+function injectSettingsCollapseBtns(){
+  const cfg=document.getElementById('tab-cfg');
+  if(!cfg)return;
+  Array.from(cfg.children).forEach((panel,idx)=>{
+    if(!panel.classList||!panel.classList.contains('pan'))return;
+    const title=panel.querySelector('.pan-title');
+    if(!title||title.querySelector('.card-collapse-btn'))return;
+    if(!panel.id)panel.id='cfg-pan-'+idx;
+    const key=panel.id;
+    const btn=document.createElement('button');
+    btn.className='card-collapse-btn';
+    btn.setAttribute('aria-label','Réduire ou déplier ce panneau');
+    btn.title='Réduire le panneau';
+    btn.innerHTML='<i class="ti ti-chevron-up"></i>';
+    btn.onclick=(e)=>{e.stopPropagation();toggleSettingsCollapse(panel,key);};
+    title.appendChild(btn);
+    if(getCollapsedMap()[key]){
+      panel.classList.add('card-collapsed');
+      btn.querySelector('i').className='ti ti-chevron-down';
+      btn.title='Déplier le panneau';
+    }
+  });
 }
 
 function saveDashLayout(tabId){
@@ -6917,6 +6989,7 @@ window.addEventListener('load',()=>{
   if(dashLayoutMedia)applyDashLayout(dashLayoutMedia,'media');
   else applyDashLayout(DEFAULT_LAYOUT_MEDIA,'media');
   initDashDragDrop();
+  injectSettingsCollapseBtns();
   // Accueil est l'onglet actif par défaut au chargement
   const deb=document.getElementById('dashEditBtn');if(deb)deb.style.display='flex';
   // ── Fond & accentuation
@@ -7355,7 +7428,7 @@ const PREF_KEYS = [
   'majin_media','majin_pro_custom','majin_media_custom',
   'majin_headers','majin_cat_labels',
   'majin_view_modes',
-  'majin_dash_layout_home','majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media',
+  'majin_dash_layout_home','majin_dash_layout','majin_dash_layout_pro','majin_dash_layout_media','majin_card_collapsed',
   'majin_cities','majin_weather_src','majin_weather_src_url',
   'majin_cal_mode','majin_cal_iframe','majin_cal_ics','majin_reminders','majin_notes','majin_gmail',
   'majin_local_desktop_apps',
