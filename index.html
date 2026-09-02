@@ -8141,18 +8141,23 @@ async function tafMount(slotId){
   }
 
   const f = tafEnsureFrame();
-  if(f.parentNode !== slot) slot.appendChild(f);
+  const estNouveau = f.parentNode !== slot;
+  if(estNouveau) slot.appendChild(f);
 
-  // Filet de sécurité : le fichier peut répondre sans que l'application démarre
-  // (erreur JS, chemin d'API faux). Sans poignée de main, on le dit.
+  // Ping 800 ms après montage : listener MAJIN déjà actif à ce moment.
+  // TAF répond immédiatement, éliminant la race condition de démarrage.
+  setTimeout(() => tafPost({ type:'majin:ping' }), 800);
+
+  // Filet — ne couvre TAF que si la vignette est vraiment vide après 12 s.
   setTimeout(() => {
-    if(!tafReady && f.parentNode === slot){
-      tafNotice(slot, 'TAF ne répond pas',
-        'La page se charge mais n’envoie aucun signal. La balise ' +
-        '<code>&lt;meta name="taf-api"&gt;</code> pointe peut-être au mauvais endroit — ' +
-        'elle doit valoir <code>/taf/api</code> si les fonctions ont été déplacées.');
-    }
-  }, 9000);
+    if(tafReady) return;
+    const hasContent = slot.querySelector('table,section,.view,.empty,.app-head');
+    if(hasContent) return;
+    tafNotice(slot, 'TAF ne répond pas',
+      'La page se charge mais n\'envoie aucun signal. ' +
+      'Vérifiez que <code>app.js</code> est bien déployé dans <code>/taf/</code> et que ' +
+      '<code>taf/index.html</code> contient <code>&lt;meta name="taf-api" content="/api"&gt;</code>.');
+  }, 12000);
 }
 
 function tafReload(){
@@ -8172,6 +8177,7 @@ function tafExpand(){
   ov.style.display = 'flex';
   tafMount('tafOverlaySlot');
   tafPost({ type:'majin:mode', mode:'full' });
+  setTimeout(() => tafPost({ type:'majin:ping' }), 400);
 }
 
 function tafCollapse(){
@@ -8180,6 +8186,7 @@ function tafCollapse(){
   ov.style.display = 'none';
   tafMount('tafSlot');
   tafPost({ type:'majin:mode', mode:'widget' });
+  setTimeout(() => tafPost({ type:'majin:ping' }), 400);
 }
 
 function tafPost(msg){
