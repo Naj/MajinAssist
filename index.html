@@ -964,63 +964,75 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
-}/* ═══ Barre du mode disposition ═══ */
-#dashModeBarHome{
-  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}/* ═══ Voyant de synchronisation, dans le bandeau du logo ═══ */
+.sync-lamp{
+  display:flex; align-items:center; gap:7px;
+  margin-left:14px; padding:5px 11px 5px 9px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--bor); border-radius:20px;
+  cursor:pointer; font-family:var(--fonthud,monospace);
+  font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--mut); white-space:nowrap;
+  transition:background .18s, border-color .18s, color .18s;
 }
-#dashModeBarHome > span:first-of-type{
-  font-weight:800; letter-spacing:1.5px; white-space:nowrap;
+.sync-lamp:hover{ background:rgba(255,255,255,0.09); color:var(--txt); }
+:root.light .sync-lamp{ background:rgba(0,0,0,0.03); }
+
+.sync-lamp-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--mut); flex-shrink:0;
+  transition:background .25s, box-shadow .25s;
 }
-.dash-mode-hint{
-  font-size:11px; font-weight:500; letter-spacing:0;
-  color:var(--mut); text-transform:none;
+/* Le halo double le signal porté par la couleur : sur un bandeau chargé,
+   la teinte seule se remarque mal, et elle exclut les daltoniens. */
+.sync-lamp.is-ok    .sync-lamp-dot{ background:#50BE87; box-shadow:0 0 7px rgba(80,190,135,0.8); }
+.sync-lamp.is-busy  .sync-lamp-dot{ background:#FFB400; box-shadow:0 0 7px rgba(255,180,0,0.8);
+                                    animation:sync-lamp-pulse 1s ease-in-out infinite; }
+.sync-lamp.is-error .sync-lamp-dot{ background:#e24a4a; box-shadow:0 0 7px rgba(226,74,74,0.85); }
+.sync-lamp.is-off   .sync-lamp-dot{ background:var(--mut); box-shadow:none; }
+
+.sync-lamp.is-ok{ color:#50BE87; border-color:rgba(80,190,135,0.35); }
+.sync-lamp.is-error{ color:#e24a4a; border-color:rgba(226,74,74,0.4); }
+
+@keyframes sync-lamp-pulse{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:.45; transform:scale(.8); }
 }
-.dash-mode-hint b{ color:var(--r); font-size:12px; }
-/* La validation est mise en avant, la réinitialisation reste en retrait :
-   elle efface une disposition qu'on a pu mettre longtemps à composer. */
-.dash-mode-done{
-  margin-left:auto; font-size:11.5px; padding:6px 16px;
-  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
-}
-.dash-mode-reset{
-  font-size:11px; padding:6px 13px; opacity:.75;
-  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
-  order:3;
-}
-.dash-mode-reset:hover{ opacity:1; }
-.dash-mode-done{ order:4; }
-@media (max-width:760px){
-  .dash-mode-hint{ flex:1 1 100%; order:2; }
-  .dash-mode-reset{ margin-left:auto; }
-  .dash-mode-done{ margin-left:0; }
+/* Sur écran étroit, le point suffit : le libellé mangerait la place du titre. */
+@media (max-width:900px){
+  .sync-lamp-txt{ display:none; }
+  .sync-lamp{ padding:6px; margin-left:8px; }
 }
 
-/* ═══ Grille à placement explicite (Accueil) ═══ */
-#tab-home.dashboard-grid{
+/* ═══ Grille à placement explicite (Accueil + Applications) ═══ */
+#tab-home.dashboard-grid,
+#tab-perso.dashboard-grid,
+#tab-pro.dashboard-grid,
+#tab-media.dashboard-grid{
   grid-auto-rows:74px;
   align-content:start;
   position:relative;
 }
 /* Une vignette placée ignore les classes col-N / row-N : ses coordonnées
    sont posées en style inline par le moteur. */
-#tab-home .dash-widget.dg-placed{
+.dash-widget.dg-placed{
   display:flex; flex-direction:column;
   min-height:0;
 }
-#tab-home .dash-widget.dg-placed > .pan{ flex:1; overflow:auto; min-height:0; }
-#tab-home .dash-widget.dg-placed .chat-area{ max-height:none; flex:1; }
-#tab-home .dash-widget.dg-placed .cal-shell{ flex:1; }
-#tab-home .dash-widget.dg-placed .cal-shell iframe{ height:100%; min-height:200px; }
+.dash-widget.dg-placed > .pan{ flex:1; overflow:auto; min-height:0; }
+.dash-widget.dg-placed .chat-area{ max-height:none; flex:1; }
+.dash-widget.dg-placed .cal-shell{ flex:1; }
+.dash-widget.dg-placed .cal-shell iframe{ height:100%; min-height:200px; }
 
 /* Vignette en cours de manipulation */
-#tab-home .dash-widget.dg-active{
+.dash-widget.dg-active{
   z-index:60;
   box-shadow:0 14px 40px rgba(0,0,0,0.45);
   outline:2px solid var(--r); outline-offset:-2px;
   transition:none;
 }
-#tab-home .dash-widget.dg-invalid{ outline-color:#e24a4a; }
-#tab-home .dash-widget.dg-invalid .dg-badge{ background:#e24a4a; }
+.dash-widget.dg-invalid{ outline-color:#e24a4a; }
+.dash-widget.dg-invalid .dg-badge{ background:#e24a4a; }
 
 /* Empreinte de destination : montre où la carte va se poser. */
 .dg-shadow{
@@ -1042,7 +1054,7 @@ body.is-electron .electron-close-btn{display:flex;}
 }
 
 /* ── Poignées : cibles tactiles confortables ── */
-#tab-home .drag-handle{
+.dashboard-grid .drag-handle{
   width:34px; height:26px;
   display:flex; align-items:center; justify-content:center;
   cursor:grab; touch-action:none;
@@ -1050,13 +1062,28 @@ body.is-electron .electron-close-btn{display:flex;}
   background:rgba(226,74,74,0.16);
   color:var(--r); font-size:13px; letter-spacing:1px;
 }
-#tab-home .drag-handle:hover{ background:rgba(226,74,74,0.3); }
-body.dash-editing-home #tab-home .dash-widget{ cursor:default; }
+.dashboard-grid .drag-handle:hover{ background:rgba(226,74,74,0.3); }
 /* Hors mode disposition, la grille est inerte : ni curseur de saisie, ni
-   poignée révélée au survol. */
+   poignée révélée au survol. Chaque onglet a son propre drapeau. */
 body:not(.dash-editing-home) #tab-home .drag-handle,
-body:not(.dash-editing-home) #tab-home .resize-handle{ display:none !important; }
-body.dash-editing-home #tab-home .dash-widget{ outline:1px dashed rgba(226,74,74,0.35); outline-offset:-1px; }
+body:not(.dash-editing-home) #tab-home .resize-handle,
+body:not(.dash-editing-apps) #tab-perso .drag-handle,
+body:not(.dash-editing-apps) #tab-perso .resize-handle,
+body:not(.dash-editing-apps) #tab-pro .drag-handle,
+body:not(.dash-editing-apps) #tab-pro .resize-handle,
+body:not(.dash-editing-apps) #tab-media .drag-handle,
+body:not(.dash-editing-apps) #tab-media .resize-handle{ display:none !important; }
+
+/* Liseré pointillé : la seule indication que la grille est déverrouillée,
+   maintenant que la barre a disparu. */
+body.dash-editing-home #tab-home .dash-widget,
+body.dash-editing-apps #tab-perso .dash-widget,
+body.dash-editing-apps #tab-pro .dash-widget,
+body.dash-editing-apps #tab-media .dash-widget{
+  outline:1px dashed rgba(226,74,74,0.35); outline-offset:-1px; cursor:default;
+}
+/* Le bouton de réinitialisation reprend l'accent du mode actif. */
+#dashResetBtn{ color:var(--r); }
 
 .resize-handle{
   position:absolute;bottom:0;right:0;
@@ -1438,6 +1465,12 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     </div>
   </div>
 
+  <!-- VOYANT DE SYNCHRONISATION -->
+  <button class="sync-lamp" id="syncLamp" onclick="syncLampClick()" title="Synchronisation">
+    <span class="sync-lamp-dot" id="syncLampDot"></span>
+    <span class="sync-lamp-txt" id="syncLampTxt">Hors synchro</span>
+  </button>
+
   <!-- DATE & HEURE — bloc unique, centré sur le bandeau -->
   <div class="hdr-time-center" id="hdrTimeCenter">
     <div class="htc-date" id="dateStat">
@@ -1462,6 +1495,9 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <!-- DASHBOARD EDIT TOGGLE — unique, contextuel à l'onglet actif -->
     <button class="compact-toggle" id="dashEditBtn" onclick="toggleLayoutEdit()" title="Disposition libre" style="display:none;">
       <i class="ti ti-layout-dashboard"></i>
+    </button>
+    <button class="compact-toggle" id="dashResetBtn" onclick="DG.reset()" title="Remettre la disposition d'origine" style="display:none;">
+      <i class="ti ti-rotate-2"></i>
     </button>
     <div class="ai-status ai-err" id="gstatus" style="display:none;">Groq LLaMA 3.3 — non connecté</div>
     <!-- STANDBY TOGGLE -->
@@ -1510,17 +1546,6 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </div>
 
 <!-- ===== ACCUEIL ===== -->
-<div class="dash-mode-bar hidden" id="dashModeBarHome">
-  <i class="ti ti-arrows-move"></i>
-  <span>MODE DISPOSITION</span>
-  <span class="dash-mode-hint">Saisissez <b>⠿</b> pour déplacer, le coin bas-droit pour redimensionner. Chaque carte bouge seule.</span>
-  <button class="btn-ghost dash-mode-reset" onclick="resetDashLayoutHome()" title="Remettre la disposition d'origine">
-    <i class="ti ti-rotate-2"></i> Réinitialiser
-  </button>
-  <button class="btn-sm dash-mode-done" onclick="toggleDashEditHome()">
-    <i class="ti ti-check"></i> Terminer
-  </button>
-</div>
 <div class="content dashboard-grid" id="tab-home" style="display:grid;">
 
   <!-- MÉTÉO -->
@@ -1612,11 +1637,6 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- ===== APPLICATIONS (fusion Personnel / Professionnel / Médias — défilement unique) ===== -->
 <div class="content" id="tab-apps" style="display:none;flex-direction:column;padding:0;">
-<div class="dash-mode-bar hidden" id="dashModeBarApps">
-  <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleLayoutEdit()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayout();resetDashLayoutPro();resetDashLayoutMedia();">↺ Réinitialiser</button>
-</div>
 <div class="content dashboard-grid" id="tab-perso" style="display:grid;">
 
   <!-- APPS PERSO -->
@@ -7163,15 +7183,8 @@ window.addEventListener('load',()=>{
   // ── Dashboard
   // L'Accueil passe par le moteur à placement explicite ; les autres onglets
   // conservent la disposition au fil de l'eau, qui leur convient.
-  DG.apply(); DG.bind();
-  // État initial : disposition verrouillée. Les poignées restent invisibles
-  // jusqu'à ce que le bouton « Disposition » soit actionné.
-  document.querySelectorAll('#tab-home .dash-widget').forEach(w=>{
-    w.draggable=false;
-    const h=w.querySelector('.drag-handle');const r=w.querySelector('.resize-handle');
-    if(h)h.style.display='none';
-    if(r)r.style.display='none';
-  });
+  // Accueil et Applications partagent le même moteur à placement explicite.
+  DG.apply(); DG.bind(); DG.refreshHandles();
   if(dashLayout)applyDashLayout(dashLayout,'perso');
   if(dashLayoutPro)applyDashLayout(dashLayoutPro,'pro');
   else applyDashLayout(DEFAULT_LAYOUT_PRO,'pro');
@@ -7335,16 +7348,18 @@ function swTab(el,id){
     else if(k==='apps'){p.style.display=id==='apps'?'flex':'none';}
     else{p.style.display=id===k?'block':'none';}
   });
-  // barre "mode disposition" — une seule, contextuelle
-  const dmbHome=document.getElementById('dashModeBarHome');
-  if(dmbHome)dmbHome.style.display=id==='home'&&dashEditModeHome?'flex':'none';
-  const dmbApps=document.getElementById('dashModeBarApps');
-  if(dmbApps)dmbApps.style.display=id==='apps'&&dashEditMode?'flex':'none';
   // bouton "disposition libre" — un seul, visible sur Accueil et Applications
   const deb=document.getElementById('dashEditBtn');
   if(deb){
     deb.style.display=(id==='home'||id==='apps')?'flex':'none';
     deb.classList.toggle('on',id==='home'?dashEditModeHome:dashEditMode);
+  }
+  if(typeof syncLayoutButtons==='function')syncLayoutButtons();
+  // Les grilles d'Applications sont redessinées à chaque affichage : leurs
+  // coordonnées doivent être réappliquées, sinon elles repartent au fil de l'eau.
+  if(id==='apps'&&typeof DG!=='undefined'){
+    ['tab-perso','tab-pro','tab-media'].forEach(k=>DG.applyTo(document.getElementById(k)));
+    DG.refreshHandles();
   }
   if(id==='apps'){renderMedia();renderMediaCustomPanels();}
   if(id==='cfg'){renderCitySettingsList();
@@ -7357,16 +7372,28 @@ renderStandbyThemes();renderSavedRssFeeds();renderLocalDesktopApps();}
 function toggleLayoutEdit(){
   const btn=document.getElementById('dashEditBtn');
   if(currentTabId==='home'){
-    toggleDashEditHome();
+    dashEditModeHome=!dashEditModeHome;
+    document.body.classList.toggle('dash-editing-home',dashEditModeHome);
+    document.querySelectorAll('#tab-home .dash-widget').forEach(w=>injectDeleteBtn(w,dashEditModeHome));
     if(btn)btn.classList.toggle('on',dashEditModeHome);
   } else if(currentTabId==='apps'){
-    toggleDashEdit();
-    toggleDashEditPro();
-    toggleDashEditMedia();
-    const bar=document.getElementById('dashModeBarApps');
-    if(bar)bar.classList.toggle('hidden',!dashEditMode);
+    dashEditMode=dashEditModePro=dashEditModeMedia=!dashEditMode;
+    document.body.classList.toggle('dash-editing-apps',dashEditMode);
+    document.querySelectorAll('#tab-perso .dash-widget,#tab-pro .dash-widget,#tab-media .dash-widget')
+      .forEach(w=>injectDeleteBtn(w,dashEditMode));
     if(btn)btn.classList.toggle('on',dashEditMode);
   }
+  DG.refreshHandles();
+  syncLayoutButtons();
+}
+
+// Le bouton de réinitialisation n'apparaît qu'en mode disposition : hors mode,
+// il ne ferait qu'offrir un moyen d'effacer sa disposition par mégarde.
+function syncLayoutButtons(){
+  const actif = (currentTabId==='home' ? dashEditModeHome
+               : currentTabId==='apps' ? dashEditMode : false);
+  const reset = document.getElementById('dashResetBtn');
+  if(reset) reset.style.display = actif ? 'flex' : 'none';
 }
 
 // ===== LANCEUR LOCAL SANS ELECTRON (protocoles dédiés par appli) =====
@@ -7771,6 +7798,10 @@ const SYNC = (() => {
   };
 
   let enabled   = ls.get(K_ON) === '1';
+  // Ce qui est stocké et transmis est l'empreinte SHA-256 de la clé, pas la
+  // clé. Deux raisons : les en-têtes HTTP sont en Latin-1, donc une clé
+  // accentuée arrivait corrompue côté serveur ; et un secret n'a pas à dormir
+  // en clair dans le stockage du navigateur.
   let secret    = ls.get(K_KEY) || '';
   let deviceId  = ls.get(K_DEVICE) || '';
   let lastRev   = parseInt(ls.get(K_REV) || '0', 10) || 0;
@@ -7801,6 +7832,14 @@ const SYNC = (() => {
   function setState(status, detail) {
     state = { status, detail, at: Date.now() };
     if (typeof renderSyncPanel === 'function') renderSyncPanel();
+    if (typeof renderSyncLamp === 'function') renderSyncLamp();
+  }
+
+  const estEmpreinte = (v) => /^[0-9a-f]{64}$/.test(v || '');
+
+  async function empreinte(cle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('majin:' + cle));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   async function api(path, options = {}) {
@@ -7959,8 +7998,9 @@ const SYNC = (() => {
   }
 
   async function enable(key, opts = {}) {
-    secret = (key || '').trim();
-    if (!secret) throw new Error('Clé vide.');
+    const brute = (key || '').trim();
+    if (!brute) throw new Error('Clé vide.');
+    secret = await empreinte(brute);
     const st = await (async () => {
       const res = await fetch('/api/majin/sync/status?ns=' + NS, { headers: { 'X-Majin-Key': secret } });
       const d = await res.json().catch(() => ({}));
@@ -8005,7 +8045,14 @@ const SYNC = (() => {
           headers: { 'X-Majin-Key': secret, 'Content-Type': 'application/json' }, body }); } catch {}
       }
     });
-    if (enabled && secret) { pull(); startLoop(); setState('ok', 'Synchronisation active'); }
+    if (enabled && secret) {
+      // Reprise d'une machine liée avant la v48 : la clé y dort en clair.
+      // On la remplace par son empreinte sans rien demander à l'utilisateur.
+      const pret = estEmpreinte(secret)
+        ? Promise.resolve()
+        : empreinte(secret).then(h => { secret = h; ls.set(K_KEY, h); });
+      pret.then(() => { pull(); startLoop(); setState('ok', 'Synchronisation active'); });
+    }
     else setState('off', 'Désactivée');
   }
 
@@ -8019,6 +8066,41 @@ const SYNC = (() => {
     label: deviceLabel,
   };
 })();
+
+// ── Voyant du bandeau ───────────────────────────────────────────────────────
+// Il reprend l'état du module de synchro, sans le dupliquer : une seule source
+// de vérité, mise à jour par le même setState que le panneau des Paramètres.
+function renderSyncLamp() {
+  const lamp = document.getElementById('syncLamp');
+  const txt = document.getElementById('syncLampTxt');
+  if (!lamp || typeof SYNC === 'undefined') return;
+
+  const st = SYNC.state.status;
+  lamp.classList.remove('is-ok', 'is-busy', 'is-error', 'is-off');
+  lamp.classList.add('is-' + (st || 'off'));
+
+  const libelles = { ok:'Synchro', busy:'Envoi…', error:'Erreur', off:'Hors synchro' };
+  if (txt) txt.textContent = libelles[st] || 'Hors synchro';
+
+  const quand = SYNC.state.at
+    ? ' · ' + new Date(SYNC.state.at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+    : '';
+  lamp.title = (SYNC.state.detail || 'Synchronisation') + quand +
+               (SYNC.enabled ? ' · cliquer pour synchroniser' : ' · cliquer pour la configurer');
+}
+
+// Actif : on force un échange. Inactif : on emmène vers le panneau de réglages,
+// plutôt que d'ouvrir une invite là où le contexte manque.
+function syncLampClick() {
+  if (typeof SYNC === 'undefined') return;
+  if (SYNC.enabled) { SYNC.pull(); SYNC.push(); return; }
+  const ongletCfg = document.querySelector('.tab[onclick*="cfg"]');
+  if (ongletCfg && typeof swTab === 'function') swTab(ongletCfg, 'cfg');
+  setTimeout(() => {
+    document.getElementById('syncKeyInput')?.focus();
+    document.getElementById('syncKeyInput')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 120);
+}
 
 // ── Panneau Paramètres → Synchronisation ────────────────────────────────────
 function renderSyncPanel() {
@@ -8068,6 +8150,7 @@ function syncDisconnect() {
 }
 
 SYNC.boot();
+renderSyncLamp();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TAF — TRAVAIL À FAIRE (application embarquée)
@@ -8250,24 +8333,38 @@ const DG = (() => {
   const COLS = 12, ROW_H = 74, GAP = 14;
   const MIN_W = 2, MIN_H = 1, MAX_H = 20;
 
-  const gridEl = () => document.getElementById('tab-home');
+  // Grilles pilotées par le moteur. L'onglet Applications en fusionne trois :
+  // chacune garde sa propre clé de stockage, donc ses propres coordonnées.
+  const GRILLES = {
+    'tab-home':  { cle:'majin_dash_layout_home',  varGlobale:'dashLayoutHome'  },
+    'tab-perso': { cle:'majin_dash_layout',       varGlobale:'dashLayout'      },
+    'tab-pro':   { cle:'majin_dash_layout_pro',   varGlobale:'dashLayoutPro'   },
+    'tab-media': { cle:'majin_dash_layout_media', varGlobale:'dashLayoutMedia' },
+  };
 
-  function widgets(){
-    const g = gridEl();
+  const estGeree = (g) => !!(g && GRILLES[g.id]);
+
+  function widgets(g){
     return g ? [...g.querySelectorAll('.dash-widget[data-wid]')] : [];
   }
 
-  function readStore(){
-    try{ return JSON.parse(localStorage.getItem('majin_dash_layout_home') || 'null') || {}; }
+  function readStore(g){
+    const cfg = GRILLES[g?.id];
+    if(!cfg) return {};
+    try{ return JSON.parse(localStorage.getItem(cfg.cle) || 'null') || {}; }
     catch{ return {}; }
   }
 
   // Un enregistrement au nouveau format porte forcément un x et un w.
   const isNew = (o) => o && typeof o.x === 'number' && typeof o.w === 'number';
 
-  function writeStore(layout){
-    try{ localStorage.setItem('majin_dash_layout_home', JSON.stringify(layout)); }catch{}
-    if(typeof dashLayoutHome !== 'undefined') dashLayoutHome = layout;
+  function writeStore(g, layout){
+    const cfg = GRILLES[g?.id];
+    if(!cfg) return;
+    try{ localStorage.setItem(cfg.cle, JSON.stringify(layout)); }catch{}
+    // La variable globale correspondante reste synchronisée : d'autres parties
+    // du code la lisent encore, la laisser périmée créerait des incohérences.
+    try{ window[cfg.varGlobale] = layout; }catch{}
   }
 
   // Empilement au fil de l'eau : sert à la migration et aux cartes nouvelles.
@@ -8302,11 +8399,10 @@ const DG = (() => {
     el.style.gridRow    = (r.y + 1) + ' / span ' + r.h;
   }
 
-  function apply(){
-    const g = gridEl();
-    if(!g) return;
-    let layout = readStore();
-    const ws = widgets();
+  function applyTo(g){
+    if(!estGeree(g)) return;
+    let layout = readStore(g);
+    const ws = widgets(g);
 
     // Migration + accueil des vignettes jamais positionnées, en un seul passage.
     const manquants = ws.filter(el => !isNew(layout[el.dataset.wid]));
@@ -8321,24 +8417,25 @@ const DG = (() => {
         return { wid: el.dataset.wid, w: col, h: Math.max(2, row) };
       });
       layout = pack([...anciens, ...nouveaux]);
-      writeStore(layout);
+      writeStore(g, layout);
     }
 
     ws.forEach(el => { const r = layout[el.dataset.wid]; if(r) place(el, r); });
   }
 
-  function rects(exceptWid){
-    const layout = readStore();
+  function apply(){ Object.keys(GRILLES).forEach(id => applyTo(document.getElementById(id))); }
+
+  function rects(g, exceptWid){
+    const layout = readStore(g);
     return Object.entries(layout)
-      .filter(([wid]) => wid !== exceptWid && document.getElementById('dw-' + wid))
+      .filter(([wid]) => wid !== exceptWid && g.querySelector('#dw-' + CSS.escape(wid)))
       .map(([, r]) => r);
   }
 
   const overlaps = (a, list) => list.some(r =>
     a.x < r.x + r.w && a.x + a.w > r.x && a.y < r.y + r.h && a.y + a.h > r.y);
 
-  function unit(){
-    const g = gridEl();
+  function unit(g){
     const cs = getComputedStyle(g);
     const inner = g.clientWidth
       - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
@@ -8355,18 +8452,17 @@ const DG = (() => {
   }
   function clearBadge(el){ el.querySelector('.dg-badge')?.remove(); }
 
-  function shadow(r){
-    const g = gridEl();
+  function shadow(g, r){
     let sh = g.querySelector('.dg-shadow');
     if(!sh){ sh = document.createElement('div'); sh.className = 'dg-shadow'; g.appendChild(sh); }
     sh.style.gridColumn = (r.x + 1) + ' / span ' + r.w;
     sh.style.gridRow    = (r.y + 1) + ' / span ' + r.h;
     return sh;
   }
-  function clearShadow(){ gridEl()?.querySelector('.dg-shadow')?.remove(); }
+  function clearShadow(g){ g?.querySelector('.dg-shadow')?.remove(); }
 
-  function start(e, el, mode){
-    const layout = readStore();
+  function start(e, g, el, mode){
+    const layout = readStore(g);
     const wid = el.dataset.wid;
     const base = layout[wid];
     if(!base) return;
@@ -8374,23 +8470,23 @@ const DG = (() => {
     e.stopPropagation();
 
     geste = {
-      mode, el, wid,
+      mode, g, el, wid,
       base: { ...base },
       cible: { ...base },
       px: e.clientX, py: e.clientY,
-      autres: rects(wid),
+      autres: rects(g, wid),
       valide: true,
     };
     el.classList.add('dg-active');
     el.setPointerCapture?.(e.pointerId);
     document.body.style.userSelect = 'none';
-    shadow(base);
+    shadow(g, base);
     badge(el, base.w + ' × ' + base.h);
   }
 
   function move(e){
     if(!geste) return;
-    const u = unit();
+    const u = unit(geste.g);
     const dx = Math.round((e.clientX - geste.px) / u.col);
     const dy = Math.round((e.clientY - geste.py) / u.row);
     const b = geste.base;
@@ -8415,44 +8511,49 @@ const DG = (() => {
     // que les autres vignettes ne bougeront jamais toutes seules.
     geste.valide = !overlaps(c, geste.autres);
     geste.el.classList.toggle('dg-invalid', !geste.valide);
-    shadow(c).classList.toggle('is-invalid', !geste.valide);
+    shadow(geste.g, c).classList.toggle('is-invalid', !geste.valide);
     badge(geste.el, c.w + ' × ' + c.h);
     if(geste.mode === 'resize') place(geste.el, c);
   }
 
   function end(){
     if(!geste) return;
-    const { el, wid, cible, valide, base } = geste;
+    const { g, el, wid, cible, valide, base } = geste;
     el.classList.remove('dg-active', 'dg-invalid');
     clearBadge(el);
-    clearShadow();
+    clearShadow(g);
     document.body.style.userSelect = '';
 
     const retenu = valide ? cible : base;
-    const layout = readStore();
+    const layout = readStore(g);
     layout[wid] = retenu;
-    writeStore(layout);
+    writeStore(g, layout);
     place(el, retenu);
     geste = null;
     if(typeof SYNC !== 'undefined' && SYNC.enabled) SYNC.push?.();
   }
 
-  function bind(){
-    const g = gridEl();
-    if(!g || g._dgBound) return;
-    g._dgBound = true;
+  // Le mode disposition est propre à l'onglet : Accueil et Applications ont
+  // chacun leur drapeau, et une grille ne s'ouvre que si le sien est levé.
+  function deverrouillee(g){
+    if(g.id === 'tab-home') return document.body.classList.contains('dash-editing-home');
+    return document.body.classList.contains('dash-editing-apps');
+  }
 
-    // Capture : le moteur doit passer avant l'ancien drag & drop HTML5,
-    // qui reste en place pour les autres onglets.
-    g.addEventListener('pointerdown', (e) => {
-      // Verrou : hors mode disposition, aucune carte ne bouge. C'est le seul
-      // moyen d'éviter qu'un clic maintenu sur un en-tête déplace une vignette.
-      if(!document.body.classList.contains('dash-editing-home')) return;
-      if(e.button !== 0 && e.pointerType === 'mouse') return;
+  function bind(){
+    // Écoute unique au niveau du document : les grilles d'Applications sont
+    // redessinées à chaque rendu, un écouteur posé sur chacune serait perdu.
+    if(document._dgBound) return;
+    document._dgBound = true;
+
+    document.addEventListener('pointerdown', (e) => {
       const el = e.target.closest?.('.dash-widget[data-wid]');
       if(!el) return;
-      if(e.target.closest('.resize-handle')) return start(e, el, 'resize');
-      if(e.target.closest('.drag-handle'))   return start(e, el, 'move');
+      const g = el.closest('.dashboard-grid');
+      if(!estGeree(g) || !deverrouillee(g)) return;
+      if(e.button !== 0 && e.pointerType === 'mouse') return;
+      if(e.target.closest('.resize-handle')) return start(e, g, el, 'resize');
+      if(e.target.closest('.drag-handle'))   return start(e, g, el, 'move');
     }, true);
 
     window.addEventListener('pointermove', move, { passive:false });
@@ -8468,17 +8569,46 @@ const DG = (() => {
     });
   }
 
-  function reset(){
-    try{ localStorage.removeItem('majin_dash_layout_home'); }catch{}
-    if(typeof dashLayoutHome !== 'undefined') dashLayoutHome = null;
-    widgets().forEach(el => {
+  function resetGrid(id){
+    const g = document.getElementById(id);
+    const cfg = GRILLES[id];
+    if(!g || !cfg) return;
+    try{ localStorage.removeItem(cfg.cle); }catch{}
+    try{ window[cfg.varGlobale] = null; }catch{}
+    widgets(g).forEach(el => {
       el.classList.remove('dg-placed');
       el.style.gridColumn = ''; el.style.gridRow = '';
     });
-    apply();
+    applyTo(g);
   }
 
-  return { apply, bind, reset, readStore };
+  // Réinitialise l'onglet courant seulement : celui d'à côté n'a pas à être
+  // remis à plat parce qu'on range celui-ci.
+  function reset(){
+    if(typeof currentTabId !== 'undefined' && currentTabId === 'apps'){
+      ['tab-perso','tab-pro','tab-media'].forEach(resetGrid);
+    }else{
+      resetGrid('tab-home');
+    }
+  }
+
+  // Verrouille visuellement une grille : poignées masquées hors mode édition.
+  function refreshHandles(){
+    Object.keys(GRILLES).forEach(id => {
+      const g = document.getElementById(id);
+      if(!g) return;
+      const ouvert = deverrouillee(g);
+      widgets(g).forEach(w => {
+        w.draggable = false;
+        const h = w.querySelector('.drag-handle');
+        const r = w.querySelector('.resize-handle');
+        if(h) h.style.display = ouvert ? 'flex' : 'none';
+        if(r) r.style.display = ouvert ? 'flex' : 'none';
+      });
+    });
+  }
+
+  return { apply, applyTo, bind, reset, resetGrid, readStore, refreshHandles };
 })();
 
 tafMount('tafSlot');
