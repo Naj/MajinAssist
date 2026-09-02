@@ -107,11 +107,13 @@ async function apiFetch(path, options) {
     return res;
   }
 
-  apiDiag = "Aucune fonction trouvée. Tentatives : " + essais.join(" · ");
+  apiDiag = "Aucune fonction trouvée. Tentatives : " + essais.join(" · ") +
+    ". Un HTTP 405 signifie qu'aucune fonction n'occupe cette route : " +
+    "Cloudflare a tenté de servir un fichier statique, qui refuse le POST.";
   const err = new Error(
-    "Backend TAF introuvable. Les fonctions Cloudflare ne répondent ni sur " +
-    API_BASES.join(" ni sur ") + ". Copiez le dossier functions/ de votre projet " +
-    "TAF dans le dépôt MAJIN, sous functions/api/, et ajoutez le binding D1."
+    "Backend TAF introuvable. Le dossier functions/ de TAF est absent du dépôt. " +
+    "Restaurez functions/api/sync.js et functions/api/share/ depuis l'historique Git " +
+    "ou depuis votre projet TAF d'origine."
   );
   err.diag = apiDiag;
   throw err;
