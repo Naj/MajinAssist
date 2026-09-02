@@ -967,7 +967,7 @@ body.is-electron .electron-close-btn{display:flex;}
 }/* ═══ Voyant de synchronisation, dans le bandeau du logo ═══ */
 .sync-lamp{
   display:flex; align-items:center; gap:7px;
-  margin-left:14px; padding:5px 11px 5px 9px;
+  margin-right:6px; padding:5px 11px 5px 9px;
   background:rgba(255,255,255,0.04);
   border:1px solid var(--bor); border-radius:20px;
   cursor:pointer; font-family:var(--fonthud,monospace);
@@ -999,9 +999,11 @@ body.is-electron .electron-close-btn{display:flex;}
   50%    { opacity:.45; transform:scale(.8); }
 }
 /* Sur écran étroit, le point suffit : le libellé mangerait la place du titre. */
-@media (max-width:900px){
+/* Le libellé s'efface tôt : le bandeau porte déjà six commandes à droite,
+   et le bloc date/heure occupe le centre. */
+@media (max-width:1200px){
   .sync-lamp-txt{ display:none; }
-  .sync-lamp{ padding:6px; margin-left:8px; }
+  .sync-lamp{ padding:6px; margin-right:4px; }
 }
 
 /* ═══ Grille à placement explicite (Accueil + Applications) ═══ */
@@ -1465,11 +1467,6 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     </div>
   </div>
 
-  <!-- VOYANT DE SYNCHRONISATION -->
-  <button class="sync-lamp" id="syncLamp" onclick="syncLampClick()" title="Synchronisation">
-    <span class="sync-lamp-dot" id="syncLampDot"></span>
-    <span class="sync-lamp-txt" id="syncLampTxt">Hors synchro</span>
-  </button>
 
   <!-- DATE & HEURE — bloc unique, centré sur le bandeau -->
   <div class="hdr-time-center" id="hdrTimeCenter">
@@ -1492,6 +1489,13 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Thème clair / sombre">
       <div class="theme-toggle-knob" id="themeKnob">🌙</div>
     </button>
+    <!-- VOYANT DE SYNCHRONISATION — dans le groupe de droite, hors de la
+         trajectoire du bloc date/heure qui occupe le centre en absolu. -->
+    <button class="sync-lamp" id="syncLamp" onclick="syncLampClick()" title="Synchronisation">
+      <span class="sync-lamp-dot" id="syncLampDot"></span>
+      <span class="sync-lamp-txt" id="syncLampTxt">Hors synchro</span>
+    </button>
+
     <!-- DASHBOARD EDIT TOGGLE — unique, contextuel à l'onglet actif -->
     <button class="compact-toggle" id="dashEditBtn" onclick="toggleLayoutEdit()" title="Disposition libre" style="display:none;">
       <i class="ti ti-layout-dashboard"></i>
@@ -1499,7 +1503,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <button class="compact-toggle" id="dashResetBtn" onclick="DG.reset()" title="Remettre la disposition d'origine" style="display:none;">
       <i class="ti ti-rotate-2"></i>
     </button>
-    <div class="ai-status ai-err" id="gstatus" style="display:none;">Groq LLaMA 3.3 — non connecté</div>
+    <div class="ai-status ai-err" id="gstatus" style="display:none;">Groq — non connecté</div>
     <!-- STANDBY TOGGLE -->
     <button class="compact-toggle" id="standbyBtn" onclick="enterStandby()" title="Mode veille" style="position:relative;">
       <i class="ti ti-player-pause"></i>
@@ -1621,7 +1625,7 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <div class="pan" id="assistantPanel" style="border:none;min-height:200px;display:flex;flex-direction:column;padding-bottom:10px;background:transparent;">
       <div class="pan-title">
         <i class="ti ti-sparkles" style="color:var(--ai);"></i>
-        <span class="pan-title-editable" style="color:var(--ai);" ondblclick="editHeader(this,'hdr_ai')" id="hdr_ai_display">MAJIN — Groq LLaMA 3.3</span>
+        <span class="pan-title-editable" style="color:var(--ai);" ondblclick="editHeader(this,'hdr_ai')" id="hdr_ai_display">MAJIN — Groq GPT-OSS 120B</span>
         <span id="braveActiveBadge" style="display:none;margin-left:8px;" class="web-badge">🔍 Web</span>
         <button id="ttsToggleBtn" onclick="toggleTTS()" title="Couper la voix" style="margin-left:auto;background:none;border:1px solid rgba(167,139,250,0.3);border-radius:6px;width:26px;height:26px;color:var(--ai);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;" onmouseenter="this.style.borderColor='var(--ai)'" onmouseleave="this.style.borderColor='rgba(167,139,250,0.3)'"><i class="ti ti-volume"></i></button>
         <button onclick="stopTTS()" title="Arrêter la parole" style="background:none;border:1px solid rgba(226,74,74,0.3);border-radius:6px;width:26px;height:26px;color:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;" onmouseenter="this.style.borderColor='var(--r)'" onmouseleave="this.style.borderColor='rgba(226,74,74,0.3)'"><i class="ti ti-player-stop"></i></button>
@@ -1915,13 +1919,13 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
   <!-- GROQ -->
   <div class="pan" style="margin-bottom:14px;">
-    <div class="pan-title"><i class="ti ti-sparkles" style="color:var(--ai);"></i><span style="color:var(--ai);">Assistant IA — Groq LLaMA 3.3 (100% gratuit)</span></div>
+    <div class="pan-title"><i class="ti ti-sparkles" style="color:var(--ai);"></i><span style="color:var(--ai);">Assistant IA — Groq GPT-OSS 120B (100% gratuit)</span></div>
     <div class="setting-row">
       <div class="setting-lbl">Clé API Groq :</div>
       <input class="setting-inp" id="apiKeyInp" type="password" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx"/>
       <button class="btn-sm ai" onclick="connectAI()"><i class="ti ti-sparkles"></i> Connecter</button>
     </div>
-    <div id="aiInfo" style="display:none;margin-top:8px;padding:10px 14px;background:var(--aib);border:1px solid rgba(167,139,250,0.4);border-radius:8px;font-size:13px;color:var(--ai);font-weight:700;">✅ Groq opérationnel — LLaMA 3.3-70B actif</div>
+    <div id="aiInfo" style="display:none;margin-top:8px;padding:10px 14px;background:var(--aib);border:1px solid rgba(167,139,250,0.4);border-radius:8px;font-size:13px;color:var(--ai);font-weight:700;">✅ Groq opérationnel — GPT-OSS 120B actif</div>
     <div style="margin-top:10px;">
       <button class="btn-ghost" style="font-size:12px;" onclick="document.getElementById('groqHelpModal').classList.add('open')">
         <i class="ti ti-help-circle" style="color:var(--ai);"></i> Comment obtenir ma clé Groq gratuite ?
@@ -3012,6 +3016,13 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </style>
 
 <script>
+// ===== MODÈLE GROQ =====
+// llama-3.3-70b-versatile a été arrêté par Groq le 16 août 2026 ;
+// openai/gpt-oss-120b est le remplacement recommandé pour ce profil.
+// Une seule constante : la prochaine mise hors service ne demandera qu'une
+// ligne. Liste à jour : https://console.groq.com/docs/models
+const GROQ_MODEL = 'openai/gpt-oss-120b';
+
 // ===== COMPACT MODE =====
 let isCompact=localStorage.getItem('majin_compact')==='true';
 function toggleCompact(){
@@ -3546,7 +3557,7 @@ const DEFAULT_TRANSPORT=[{name:'Transavia',icon:'plane-departure',sub:'Vols',url
 const DEFAULT_MEDIA={
   plex:[{name:'Plex Web',icon:'device-tv',url:'https://app.plex.tv',sub:'Bibliothèque'},{name:'Films',icon:'movie',url:'https://app.plex.tv',sub:'Cinéma'},{name:'Séries',icon:'tv',url:'https://app.plex.tv',sub:'Épisodes'},{name:'Musique',icon:'music',url:'https://app.plex.tv',sub:'Albums'}],
   spotify:[{name:'Spotify',icon:'brand-spotify',url:'https://open.spotify.com',sub:'Accueil'},{name:'Playlist matin',icon:'headphones',url:'https://open.spotify.com',sub:'Playlist'},{name:'Podcasts',icon:'microphone-2',url:'https://open.spotify.com/your-episodes',sub:'Épisodes'},{name:'Sport mix',icon:'ball-football',url:'https://open.spotify.com',sub:'Playlist'}],
-  ia:[{name:'Groq Chat',icon:'sparkles',url:'https://groq.com',sub:'LLaMA 3.3 · Gratuit'},{name:'Google Agenda',icon:'calendar-event',url:'https://calendar.google.com',sub:'Gmail · Gratuit'},{name:'ChatGPT',icon:'brand-openai',url:'https://chat.openai.com',sub:'OpenAI'},{name:'Perplexity',icon:'search',url:'https://www.perplexity.ai',sub:'Recherche IA'}]
+  ia:[{name:'Groq Chat',icon:'sparkles',url:'https://groq.com',sub:'GPT-OSS 120B · Gratuit'},{name:'Google Agenda',icon:'calendar-event',url:'https://calendar.google.com',sub:'Gmail · Gratuit'},{name:'ChatGPT',icon:'brand-openai',url:'https://chat.openai.com',sub:'OpenAI'},{name:'Perplexity',icon:'search',url:'https://www.perplexity.ai',sub:'Recherche IA'}]
 };
 
 // ===== ÉTAT =====
@@ -3666,7 +3677,7 @@ async function sendWithSearch(){
   try{
     const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:800,temperature:0.5})
+      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:800,temperature:0.5})
     });
     const data=await res.json();hideTyping();
     if(data.choices?.[0]){
@@ -4401,7 +4412,7 @@ function enterStandby(){
     // Thème MAJIN original
     const badge=document.getElementById('standbyAiBadge');
     const lbl=document.getElementById('standbyAiLabel');
-    if(connected){badge.classList.add('ai-on');if(lbl)lbl.textContent='Groq LLaMA 3.3 — actif';}
+    if(connected){badge.classList.add('ai-on');if(lbl)lbl.textContent='Groq GPT-OSS 120B — actif';}
     else{badge.classList.remove('ai-on');if(lbl)lbl.textContent='En veille';}
     updateStandbyClock();
     standbyTickInterval=setInterval(updateStandbyClock,1000);
@@ -5558,7 +5569,7 @@ function connectAI(){
   const k=document.getElementById('apiKeyInp').value.trim();
   if(!k||!k.startsWith('gsk_'))return alert('La clé Groq doit commencer par gsk_\nObtiens-la sur console.groq.com/keys');
   apiKey=k;localStorage.setItem('majin_api_key',k);connected=true;
-  document.getElementById('gstatus').textContent='Groq LLaMA 3.3 — actif';
+  document.getElementById('gstatus').textContent='Groq GPT-OSS 120B — actif';
   document.getElementById('gstatus').className='ai-status ai-ok';
   document.getElementById('aiInfo').style.display='block';
   document.getElementById('modelStat').textContent='LLaMA-3.3-70B';
@@ -5637,7 +5648,7 @@ async function send(){
   try{
     const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:600,temperature:0.7})
+      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:600,temperature:0.7})
     });
     const data=await res.json();hideTyping();
     if(data.choices?.[0]){
@@ -6933,8 +6944,19 @@ async function fetchNews(src){
   const feed=NEWS_FEEDS[newsSrc]||NEWS_FEEDS.lemonde;
   let loaded=false;
 
-  // ── Proxy 1 : rss2json.com (le plus fiable, JSON) ──────────────────
+  // ── Relais maison : notre propre domaine, sans quota ni tiers ──────
+  // Placé en tête parce que c'est le seul maillon dont nous maîtrisons la
+  // disponibilité. Les trois suivants restent en secours.
   try{
+    const r=await fetch(`/api/majin/feed?url=${encodeURIComponent(feed.url)}`,{signal:AbortSignal.timeout(9000)});
+    if(r.ok){
+      const parsed=parseRssXml(await r.text());
+      if(parsed.length){newsItems=parsed.map(it=>({...it,url:it.url||feed.site}));loaded=true;}
+    }
+  }catch(e){}
+
+  // ── Proxy 2 : rss2json.com (JSON, soumis à quota) ──────────────────
+  if(!loaded)try{
     const r=await fetch(`/api/majin/rss/api.json?rss_url=${encodeURIComponent(feed.url)}&count=20`,{signal:AbortSignal.timeout(9000)});
     if(r.ok){
       const d=await r.json();
@@ -6945,7 +6967,7 @@ async function fetchNews(src){
     }
   }catch(e){}
 
-  // ── Proxy 2 : allorigins.win (XML brut → parse manuel) ─────────────
+  // ── Proxy 3 : allorigins.win (XML brut → parse manuel) ─────────────
   if(!loaded){
     try{
       const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`,{signal:AbortSignal.timeout(9000)});
@@ -6959,7 +6981,7 @@ async function fetchNews(src){
     }catch(e){}
   }
 
-  // ── Proxy 3 : corsproxy.io (XML brut) ──────────────────────────────
+  // ── Proxy 4 : corsproxy.io (XML brut) ──────────────────────────────
   if(!loaded){
     try{
       const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(feed.url)}`,{signal:AbortSignal.timeout(9000)});
@@ -6976,7 +6998,7 @@ async function fetchNews(src){
     newsItems=[
       {title:`Actualités ${feed.label} — cliquez pour ouvrir le site`,url:feed.site},
       {title:`MAJIN • Bandeau actif • Actualisation auto toutes les 5 min`,url:feed.site},
-      {title:`Conseil : vérifiez votre connexion ou changez de source dans Paramètres`,url:feed.site}
+      {title:`Aucun relais n'a répondu — le flux du site est peut-être hors service`,url:feed.site}
     ];
     if(statusEl){statusEl.style.color='var(--r)';statusEl.textContent=`⚠️ Flux indisponible — lien direct actif`;}
   } else {
