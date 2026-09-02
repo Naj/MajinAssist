@@ -964,7 +964,53 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
-}/* ═══ Voyant de synchronisation, dans le bandeau du logo ═══ */
+}/* ═══ Mode contemplation ═══ */
+/* Tout le mobilier s'efface d'un coup. On passe par l'opacité et non par
+   display:none : le fondu est doux, et rien n'est démonté — les widgets
+   continuent de vivre derrière, prêts à réapparaître intacts. */
+body.zen .hdr,
+body.zen .wave,
+body.zen .inp-bar,
+body.zen .tabs,
+body.zen .content,
+body.zen .news-ticker,
+body.zen .stbar{
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .55s ease;
+}
+body.zen{ overflow:hidden; }
+
+/* Le fond d'écran passe au premier plan pendant le mode. */
+body.zen::before{ opacity:1 !important; z-index:1; }
+body.zen .maj-wp-logo-layer{ opacity:1 !important; z-index:1; }
+
+#zenExit{
+  position:fixed; right:20px; bottom:20px; z-index:99990;
+  display:none; align-items:center; gap:8px;
+  padding:9px 16px 9px 13px;
+  background:rgba(20,20,26,0.55);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:22px; color:rgba(255,255,255,0.72);
+  font-family:var(--fonthud,monospace); font-size:10.5px;
+  letter-spacing:1.4px; text-transform:uppercase;
+  cursor:pointer; backdrop-filter:blur(8px);
+  /* Volontairement discrète, puis franche au survol : elle doit se laisser
+     oublier sans jamais devenir introuvable. */
+  opacity:.35; transition:opacity .25s, background .25s, color .25s;
+}
+body.zen #zenExit{ display:flex; }
+#zenExit:hover{ opacity:1; background:rgba(20,20,26,0.8); color:#fff; }
+#zenExit i{ font-size:15px; }
+
+body.zen #zenBtn{ color:var(--r); }
+
+@media (max-width:640px){
+  #zenExit span{ display:none; }
+  #zenExit{ padding:11px; border-radius:50%; }
+}
+
+/* ═══ Voyant de synchronisation, dans le bandeau du logo ═══ */
 .sync-lamp{
   display:flex; align-items:center; gap:7px;
   margin-right:6px; padding:5px 11px 5px 9px;
@@ -1494,6 +1540,11 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
     <button class="sync-lamp" id="syncLamp" onclick="syncLampClick()" title="Synchronisation">
       <span class="sync-lamp-dot" id="syncLampDot"></span>
       <span class="sync-lamp-txt" id="syncLampTxt">Hors synchro</span>
+    </button>
+
+    <!-- CONTEMPLATION — efface l'interface pour laisser voir le fond d'écran -->
+    <button class="compact-toggle" id="zenBtn" onclick="toggleZen()" title="Contemplation — masquer l'interface">
+      <i class="ti ti-eye-off"></i>
     </button>
 
     <!-- DASHBOARD EDIT TOGGLE — unique, contextuel à l'onglet actif -->
@@ -2149,6 +2200,12 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </div>
 
 <!-- BANDEAU ACTU — visible partout -->
+<!-- SORTIE DE CONTEMPLATION — seul élément qui survit au mode. Sans repère
+     visible, on ne sait plus comment revenir : le mode deviendrait un piège. -->
+<button id="zenExit" onclick="toggleZen()" title="Quitter la contemplation (Échap)">
+  <i class="ti ti-eye"></i><span>Revenir</span>
+</button>
+
 <div class="news-ticker" id="newsTicker">
   <div class="news-ticker-label">📰 ACTU</div>
   <div style="flex:1;overflow:hidden;">
@@ -8160,6 +8217,31 @@ const SYNC = (() => {
     label: deviceLabel,
   };
 })();
+
+// ── Mode contemplation ──────────────────────────────────────────────────────
+// L'interface s'efface pour laisser voir le fond d'écran. MAJIN continue de
+// tourner derrière : c'est ce qui distingue ce mode de la veille.
+let zenActif = false;
+
+function toggleZen(){
+  zenActif = !zenActif;
+  document.body.classList.toggle('zen', zenActif);
+
+  const btn = document.getElementById('zenBtn');
+  if(btn) btn.title = zenActif
+    ? 'Quitter la contemplation (Échap)'
+    : "Contemplation — masquer l'interface";
+
+  // Le passage du fond d'écran à pleine opacité est purement CSS.
+  // setWallpaperOpacity injecte « body::before{opacity:X!important} » ; la
+  // règle « body.zen::before » est plus spécifique, elle l'emporte malgré
+  // l'ordre. Retirer la classe rend donc sa valeur au réglage, sans toucher
+  // au stockage — ce qui éviterait au passage une synchro pour rien.
+}
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && zenActif) toggleZen();
+});
 
 // ── Voyant du bandeau ───────────────────────────────────────────────────────
 // Il reprend l'état du module de synchro, sans le dupliquer : une seule source
