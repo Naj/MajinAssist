@@ -964,11 +964,100 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
+}/* ═══ Barre du mode disposition ═══ */
+#dashModeBarHome{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
 }
+#dashModeBarHome > span:first-of-type{
+  font-weight:800; letter-spacing:1.5px; white-space:nowrap;
+}
+.dash-mode-hint{
+  font-size:11px; font-weight:500; letter-spacing:0;
+  color:var(--mut); text-transform:none;
+}
+.dash-mode-hint b{ color:var(--r); font-size:12px; }
+/* La validation est mise en avant, la réinitialisation reste en retrait :
+   elle efface une disposition qu'on a pu mettre longtemps à composer. */
+.dash-mode-done{
+  margin-left:auto; font-size:11.5px; padding:6px 16px;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.dash-mode-reset{
+  font-size:11px; padding:6px 13px; opacity:.75;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  order:3;
+}
+.dash-mode-reset:hover{ opacity:1; }
+.dash-mode-done{ order:4; }
+@media (max-width:760px){
+  .dash-mode-hint{ flex:1 1 100%; order:2; }
+  .dash-mode-reset{ margin-left:auto; }
+  .dash-mode-done{ margin-left:0; }
+}
+
+/* ═══ Grille à placement explicite (Accueil) ═══ */
+#tab-home.dashboard-grid{
+  grid-auto-rows:74px;
+  align-content:start;
+  position:relative;
+}
+/* Une vignette placée ignore les classes col-N / row-N : ses coordonnées
+   sont posées en style inline par le moteur. */
+#tab-home .dash-widget.dg-placed{
+  display:flex; flex-direction:column;
+  min-height:0;
+}
+#tab-home .dash-widget.dg-placed > .pan{ flex:1; overflow:auto; min-height:0; }
+#tab-home .dash-widget.dg-placed .chat-area{ max-height:none; flex:1; }
+#tab-home .dash-widget.dg-placed .cal-shell{ flex:1; }
+#tab-home .dash-widget.dg-placed .cal-shell iframe{ height:100%; min-height:200px; }
+
+/* Vignette en cours de manipulation */
+#tab-home .dash-widget.dg-active{
+  z-index:60;
+  box-shadow:0 14px 40px rgba(0,0,0,0.45);
+  outline:2px solid var(--r); outline-offset:-2px;
+  transition:none;
+}
+#tab-home .dash-widget.dg-invalid{ outline-color:#e24a4a; }
+#tab-home .dash-widget.dg-invalid .dg-badge{ background:#e24a4a; }
+
+/* Empreinte de destination : montre où la carte va se poser. */
+.dg-shadow{
+  border:2px dashed var(--r);
+  border-radius:12px;
+  background:rgba(226,74,74,0.07);
+  pointer-events:none;
+  z-index:1;
+}
+.dg-shadow.is-invalid{ border-color:#e24a4a; background:rgba(226,74,74,0.16); }
+
+/* Compteur de taille, affiché pendant le geste. */
+.dg-badge{
+  position:absolute; top:8px; left:50%; transform:translateX(-50%);
+  background:var(--r); color:#fff;
+  font-family:var(--fonthud,monospace); font-size:11px; font-weight:800;
+  letter-spacing:1px; padding:3px 10px; border-radius:20px;
+  pointer-events:none; z-index:70; white-space:nowrap;
+}
+
+/* ── Poignées : cibles tactiles confortables ── */
+#tab-home .drag-handle{
+  width:34px; height:26px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:grab; touch-action:none;
+  border-radius:8px;
+  background:rgba(226,74,74,0.16);
+  color:var(--r); font-size:13px; letter-spacing:1px;
+}
+#tab-home .drag-handle:hover{ background:rgba(226,74,74,0.3); }
+body.dash-editing-home #tab-home .dash-widget{ cursor:default; }
+
 .resize-handle{
   position:absolute;bottom:0;right:0;
-  width:22px;height:22px;z-index:10;
+  width:30px;height:30px;z-index:10;
   cursor:se-resize;opacity:0;transition:opacity .2s;
+  touch-action:none;
   display:flex;align-items:flex-end;justify-content:flex-end;padding:4px;
   border-radius:0 0 12px 0;
   background:linear-gradient(135deg,transparent 50%,rgba(226,74,74,0.15) 50%);
@@ -1008,6 +1097,8 @@ body.is-electron .electron-close-btn{display:flex;}
 #tab-media .pan-title i:first-child{color:#0A6E31;}
 .dash-widget:hover .drag-handle,
 .dash-widget:hover .resize-handle,
+body.dash-editing-home #tab-home .resize-handle,
+body.dash-editing-home #tab-home .drag-handle,
 body.dash-editing .resize-handle,
 body.dash-editing-pro .resize-handle,
 body.dash-editing-media .resize-handle{opacity:1;}
@@ -1413,9 +1504,15 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 
 <!-- ===== ACCUEIL ===== -->
 <div class="dash-mode-bar hidden" id="dashModeBarHome">
-  <i class="ti ti-arrows-move"></i> MODE DISPOSITION — glissez les widgets, tirez les coins pour redimensionner
-  <button class="btn-sm" style="margin-left:auto;font-size:11px;padding:4px 12px;" onclick="toggleDashEditHome()">✓ Terminer</button>
-  <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="resetDashLayoutHome()">↺ Réinitialiser</button>
+  <i class="ti ti-arrows-move"></i>
+  <span>MODE DISPOSITION</span>
+  <span class="dash-mode-hint">Saisissez <b>⠿</b> pour déplacer, le coin bas-droit pour redimensionner. Chaque carte bouge seule.</span>
+  <button class="btn-ghost dash-mode-reset" onclick="resetDashLayoutHome()" title="Remettre la disposition d'origine">
+    <i class="ti ti-rotate-2"></i> Réinitialiser
+  </button>
+  <button class="btn-sm dash-mode-done" onclick="toggleDashEditHome()">
+    <i class="ti ti-check"></i> Terminer
+  </button>
 </div>
 <div class="content dashboard-grid" id="tab-home" style="display:grid;">
 
@@ -2959,11 +3056,16 @@ function toggleDashEditHome(){
   const btn=document.getElementById('dashEditBtnHome');
   if(bar)bar.classList.toggle('hidden',!dashEditModeHome);
   if(btn)btn.classList.toggle('on',dashEditModeHome);
+  document.body.classList.toggle('dash-editing-home',dashEditModeHome);
   document.querySelectorAll('#tab-home .dash-widget').forEach(w=>{
-    w.draggable=dashEditModeHome;
+    // Le moteur DG gère les gestes lui-même : le drag & drop HTML5 natif
+    // resterait actif en parallèle et déclencherait une image fantôme.
+    w.draggable=false;
     const h=w.querySelector('.drag-handle');const r=w.querySelector('.resize-handle');
-    if(h)h.style.display=dashEditModeHome?'flex':'none';
-    if(r)r.style.display=dashEditModeHome?'flex':'none';
+    // Visibilité plutôt que display : ainsi la règle :hover continue de
+    // révéler les poignées quand on n'est pas en mode disposition.
+    if(h)h.style.display='flex';
+    if(r)r.style.display='flex';
     injectDeleteBtn(w, dashEditModeHome);
   });
 }
@@ -3081,6 +3183,9 @@ function injectSettingsCollapseBtns(){
 }
 
 function saveDashLayout(tabId){
+  // L'Accueil a son propre format de disposition : le réécrire ici en col/row
+  // effacerait les coordonnées posées par le moteur DG.
+  if(tabId==='home'){ if(typeof DG!=='undefined') DG.apply(); return; }
   const grid=document.getElementById('tab-'+tabId);if(!grid)return;
   const layout={};
   grid.querySelectorAll('.dash-widget[data-wid]').forEach(w=>{
@@ -3096,9 +3201,10 @@ function saveDashLayout(tabId){
 }
 
 function resetDashLayoutHome(){
+  if(!confirm("Remettre la disposition d'origine ?\nLes positions et tailles que vous avez réglées seront perdues.")) return;
+  if(typeof DG!=='undefined'){ DG.reset(); return; }
   dashLayoutHome=null;
   localStorage.removeItem('majin_dash_layout_home');
-  applyDashLayout(DEFAULT_LAYOUT_HOME,'home');
 }
 
 function resetDashLayout(){
@@ -3565,6 +3671,8 @@ let calIcsUrl=localStorage.getItem('majin_cal_ics')||'';
 let calIcsEvents=null;      // événements parsés en mémoire (cache de session)
 let calIcsLoading=false;
 let calIcsError='';
+let calIcsFromCache=false;   // l'affichage vient-il du cache plutôt que du réseau
+let calIcsCacheAt=0;         // horodatage de ce cache
 let reminders=JSON.parse(localStorage.getItem('majin_reminders')||'[]');
 let remindersEditMode=false;
 let editingReminderId=null;
@@ -4833,7 +4941,7 @@ function saveCalIcs(){
   calMode='ics';localStorage.setItem('majin_cal_mode','ics');
   document.getElementById('calDisplayMode').value='ics';
   document.getElementById('calStatus').textContent='Agenda ICS configuré ✓';
-  calIcsEvents=null;calIcsError='';
+  calIcsEvents=null;calIcsError='';calIcsFromCache=false;calIcsCacheAt=0;
   renderCalView();closeModal('calModal');
   updateTabBadge();
   loadIcsCalendar(true);
@@ -4998,19 +5106,34 @@ async function loadIcsCalendar(force){
   calIcsLoading=true;calIcsError='';
   if(calMode==='ics')renderCalView();
   try{
-    const res=await fetch('/api/ics-proxy?url='+encodeURIComponent(calIcsUrl));
-    if(!res.ok)throw new Error(await res.text().catch(()=>'')||('Erreur '+res.status));
+    const res=await fetch('/api/ics-proxy?url='+encodeURIComponent(calIcsUrl),{cache:'no-store'});
+    if(!res.ok){
+      const corps=await res.text().catch(()=>'');
+      // Un 404 sur le proxy signifie presque toujours que la fonction
+      // Cloudflare functions/api/ics-proxy.js n'est plus déployée.
+      const indice=res.status===404
+        ? ' — la fonction /api/ics-proxy ne répond pas. Vérifiez que functions/api/ics-proxy.js est bien dans le dépôt.'
+        : '';
+      throw new Error('Proxy ICS : erreur '+res.status+indice+(corps&&corps.length<160?' ('+corps.trim()+')':''));
+    }
     const text=await res.text();
+    if(!/BEGIN:VCALENDAR/i.test(text)){
+      throw new Error("La réponse n'est pas un flux ICS. L'URL pointe peut-être vers une page HTML plutôt que vers le fichier .ics.");
+    }
     calIcsEvents=parseICS(text);
+    calIcsFromCache=false;
     try{localStorage.setItem('majin_cal_ics_cache',JSON.stringify({fetchedAt:Date.now(),raw:text}));}catch{}
   }catch(err){
     calIcsError=(err&&err.message)||'Erreur de chargement du calendrier.';
-    if(!calIcsEvents){
-      try{
-        const cached=JSON.parse(localStorage.getItem('majin_cal_ics_cache')||'null');
-        if(cached&&cached.raw)calIcsEvents=parseICS(cached.raw);
-      }catch{}
-    }
+    // Le cache dépanne l'affichage, il ne doit pas masquer la panne.
+    try{
+      const cached=JSON.parse(localStorage.getItem('majin_cal_ics_cache')||'null');
+      if(cached&&cached.raw&&!calIcsEvents){
+        calIcsEvents=parseICS(cached.raw);
+        calIcsFromCache=true;
+        calIcsCacheAt=cached.fetchedAt||0;
+      }
+    }catch{}
   }finally{
     calIcsLoading=false;
     if(calMode==='ics')renderCalView();
@@ -5062,11 +5185,28 @@ function renderIcsAgenda(el){
   });
   if(!rows)rows=`<div style="padding:16px;text-align:center;color:var(--mut);font-size:12px;">Aucun événement à venir 🎉</div>`;
 
+  // Une panne réseau doit rester lisible même si d'anciens événements
+  // s'affichent : sinon un agenda vide passe pour un agenda à jour.
+  let alerte='';
+  if(calIcsError){
+    const age=calIcsCacheAt?Math.round((Date.now()-calIcsCacheAt)/60000):0;
+    const ageTxt=calIcsFromCache&&age
+      ? ` Affichage issu du cache (${age<60?age+' min':Math.round(age/60)+' h'}).`
+      : '';
+    alerte=`
+      <div style="margin-bottom:8px;padding:8px 12px;background:rgba(226,74,74,0.10);border:1px solid rgba(226,74,74,0.32);border-radius:8px;font-size:11.5px;color:var(--txt);line-height:1.55;">
+        <i class="ti ti-alert-triangle" style="color:var(--r);"></i>
+        ${icsEscapeHtml(calIcsError)}${ageTxt}
+        <button class="btn-ghost" style="margin-left:6px;font-size:10.5px;padding:2px 9px;" onclick="loadIcsCalendar(true)">Réessayer</button>
+      </div>`;
+  }
+
   el.innerHTML=`
+    ${alerte}
     <div id="agendaList" style="flex:1;overflow-y:auto;max-height:280px;">${rows}</div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);">
       <i class="ti ti-refresh" style="cursor:pointer;" onclick="loadIcsCalendar(true)" title="Actualiser"></i>
-      <span>Agenda ICS · ${agenda.length} événement${agenda.length>1?'s':''}</span>
+      <span>Agenda ICS · ${agenda.length} événement${agenda.length>1?'s':''}${calIcsFromCache?' · hors ligne':''}</span>
       <a href="#" onclick="openCalendarCfg();return false;" style="margin-left:auto;color:var(--ai);">⚙️ Config</a>
     </div>`;
 }
@@ -7014,8 +7154,9 @@ window.addEventListener('load',()=>{
   // ── Compact & Thème
   applyCompact();applyTheme();
   // ── Dashboard
-  if(dashLayoutHome)applyDashLayout(dashLayoutHome,'home');
-  else applyDashLayout(DEFAULT_LAYOUT_HOME,'home');
+  // L'Accueil passe par le moteur à placement explicite ; les autres onglets
+  // conservent la disposition au fil de l'eau, qui leur convient.
+  DG.apply(); DG.bind();
   if(dashLayout)applyDashLayout(dashLayout,'perso');
   if(dashLayoutPro)applyDashLayout(dashLayoutPro,'pro');
   else applyDashLayout(DEFAULT_LAYOUT_PRO,'pro');
@@ -7648,7 +7789,7 @@ const SYNC = (() => {
   }
 
   async function api(path, options = {}) {
-    const res = await fetch('/api/sync/' + path, {
+    const res = await fetch('/api/majin/sync/' + path, {
       ...options,
       headers: {
         'X-Majin-Key': secret,
@@ -7806,7 +7947,7 @@ const SYNC = (() => {
     secret = (key || '').trim();
     if (!secret) throw new Error('Clé vide.');
     const st = await (async () => {
-      const res = await fetch('/api/sync/status?ns=' + NS, { headers: { 'X-Majin-Key': secret } });
+      const res = await fetch('/api/majin/sync/status?ns=' + NS, { headers: { 'X-Majin-Key': secret } });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || ('HTTP ' + res.status));
       return d;
@@ -7845,7 +7986,7 @@ const SYNC = (() => {
     window.addEventListener('pagehide', () => {
       if (enabled && pending.size) {
         const body = JSON.stringify({ ns: NS, device: deviceId, changes: [...pending.values()] });
-        try { fetch('/api/sync/push', { method: 'POST', keepalive: true,
+        try { fetch('/api/majin/sync/push', { method: 'POST', keepalive: true,
           headers: { 'X-Majin-Key': secret, 'Content-Type': 'application/json' }, body }); } catch {}
       }
     });
@@ -8070,6 +8211,250 @@ document.addEventListener('keydown', (e) => {
     if(ov && ov.style.display === 'flex') tafCollapse();
   }
 });
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GRILLE À PLACEMENT EXPLICITE — Accueil
+//
+// Format stocké : { wid: {x, y, w, h} }, en unités de grille.
+//   x : colonne de départ, 0 à 11      w : largeur, 2 à 12
+//   y : ligne de départ, 0 à n         h : hauteur, 1 à 20
+//
+// L'ancien format { col, row } est migré au premier chargement : les cartes
+// sont reposées dans l'ordre du document, en remplissant ligne par ligne.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DG = (() => {
+  const COLS = 12, ROW_H = 74, GAP = 14;
+  const MIN_W = 2, MIN_H = 1, MAX_H = 20;
+
+  const gridEl = () => document.getElementById('tab-home');
+
+  function widgets(){
+    const g = gridEl();
+    return g ? [...g.querySelectorAll('.dash-widget[data-wid]')] : [];
+  }
+
+  function readStore(){
+    try{ return JSON.parse(localStorage.getItem('majin_dash_layout_home') || 'null') || {}; }
+    catch{ return {}; }
+  }
+
+  // Un enregistrement au nouveau format porte forcément un x et un w.
+  const isNew = (o) => o && typeof o.x === 'number' && typeof o.w === 'number';
+
+  function writeStore(layout){
+    try{ localStorage.setItem('majin_dash_layout_home', JSON.stringify(layout)); }catch{}
+    if(typeof dashLayoutHome !== 'undefined') dashLayoutHome = layout;
+  }
+
+  // Empilement au fil de l'eau : sert à la migration et aux cartes nouvelles.
+  function pack(items){
+    const occupied = [];
+    const collides = (x,y,w,h) => occupied.some(r =>
+      x < r.x + r.w && x + r.w > r.x && y < r.y + r.h && y + r.h > r.y);
+    const out = {};
+    items.forEach(({wid, w, h}) => {
+      w = Math.max(MIN_W, Math.min(COLS, w || 4));
+      h = Math.max(MIN_H, Math.min(MAX_H, h || 4));
+      let placed = false;
+      for(let y = 0; y < 400 && !placed; y++){
+        for(let x = 0; x <= COLS - w; x++){
+          if(!collides(x, y, w, h)){
+            out[wid] = { x, y, w, h };
+            occupied.push({ x, y, w, h });
+            placed = true; break;
+          }
+        }
+      }
+      if(!placed) out[wid] = { x:0, y:0, w, h };
+    });
+    return out;
+  }
+
+  // Traduit une carte en coordonnées CSS. Le +1 vient de grid-column, qui
+  // compte les lignes de la grille à partir de 1, pas les cases à partir de 0.
+  function place(el, r){
+    el.classList.add('dg-placed');
+    el.style.gridColumn = (r.x + 1) + ' / span ' + r.w;
+    el.style.gridRow    = (r.y + 1) + ' / span ' + r.h;
+  }
+
+  function apply(){
+    const g = gridEl();
+    if(!g) return;
+    let layout = readStore();
+    const ws = widgets();
+
+    // Migration + accueil des vignettes jamais positionnées, en un seul passage.
+    const manquants = ws.filter(el => !isNew(layout[el.dataset.wid]));
+    if(manquants.length){
+      const anciens = ws.filter(el => isNew(layout[el.dataset.wid]))
+                        .map(el => ({ wid:el.dataset.wid, ...layout[el.dataset.wid] }));
+      const nouveaux = manquants.map(el => {
+        const vieux = layout[el.dataset.wid] || {};
+        const cls = [...el.classList];
+        const col = vieux.col || parseInt((cls.find(c => /^col-\d+$/.test(c)) || 'col-4').slice(4), 10);
+        const row = vieux.row || parseInt((cls.find(c => /^row-\d+$/.test(c)) || 'row-4').slice(4), 10);
+        return { wid: el.dataset.wid, w: col, h: Math.max(2, row) };
+      });
+      layout = pack([...anciens, ...nouveaux]);
+      writeStore(layout);
+    }
+
+    ws.forEach(el => { const r = layout[el.dataset.wid]; if(r) place(el, r); });
+  }
+
+  function rects(exceptWid){
+    const layout = readStore();
+    return Object.entries(layout)
+      .filter(([wid]) => wid !== exceptWid && document.getElementById('dw-' + wid))
+      .map(([, r]) => r);
+  }
+
+  const overlaps = (a, list) => list.some(r =>
+    a.x < r.x + r.w && a.x + a.w > r.x && a.y < r.y + r.h && a.y + a.h > r.y);
+
+  function unit(){
+    const g = gridEl();
+    const cs = getComputedStyle(g);
+    const inner = g.clientWidth
+      - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+    return { col: (inner + GAP) / COLS, row: ROW_H + GAP, inner };
+  }
+
+  // ── Geste unique pour déplacer et redimensionner ──────────────────────────
+  let geste = null;
+
+  function badge(el, txt){
+    let b = el.querySelector('.dg-badge');
+    if(!b){ b = document.createElement('div'); b.className = 'dg-badge'; el.appendChild(b); }
+    b.textContent = txt;
+  }
+  function clearBadge(el){ el.querySelector('.dg-badge')?.remove(); }
+
+  function shadow(r){
+    const g = gridEl();
+    let sh = g.querySelector('.dg-shadow');
+    if(!sh){ sh = document.createElement('div'); sh.className = 'dg-shadow'; g.appendChild(sh); }
+    sh.style.gridColumn = (r.x + 1) + ' / span ' + r.w;
+    sh.style.gridRow    = (r.y + 1) + ' / span ' + r.h;
+    return sh;
+  }
+  function clearShadow(){ gridEl()?.querySelector('.dg-shadow')?.remove(); }
+
+  function start(e, el, mode){
+    const layout = readStore();
+    const wid = el.dataset.wid;
+    const base = layout[wid];
+    if(!base) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    geste = {
+      mode, el, wid,
+      base: { ...base },
+      cible: { ...base },
+      px: e.clientX, py: e.clientY,
+      autres: rects(wid),
+      valide: true,
+    };
+    el.classList.add('dg-active');
+    el.setPointerCapture?.(e.pointerId);
+    document.body.style.userSelect = 'none';
+    shadow(base);
+    badge(el, base.w + ' × ' + base.h);
+  }
+
+  function move(e){
+    if(!geste) return;
+    const u = unit();
+    const dx = Math.round((e.clientX - geste.px) / u.col);
+    const dy = Math.round((e.clientY - geste.py) / u.row);
+    const b = geste.base;
+    let c;
+
+    if(geste.mode === 'move'){
+      c = {
+        x: Math.max(0, Math.min(COLS - b.w, b.x + dx)),
+        y: Math.max(0, b.y + dy),
+        w: b.w, h: b.h,
+      };
+    }else{
+      c = {
+        x: b.x, y: b.y,
+        w: Math.max(MIN_W, Math.min(COLS - b.x, b.w + dx)),
+        h: Math.max(MIN_H, Math.min(MAX_H, b.h + dy)),
+      };
+    }
+
+    geste.cible = c;
+    // Un chevauchement est refusé, pas absorbé : c'est ce refus qui garantit
+    // que les autres vignettes ne bougeront jamais toutes seules.
+    geste.valide = !overlaps(c, geste.autres);
+    geste.el.classList.toggle('dg-invalid', !geste.valide);
+    shadow(c).classList.toggle('is-invalid', !geste.valide);
+    badge(geste.el, c.w + ' × ' + c.h);
+    if(geste.mode === 'resize') place(geste.el, c);
+  }
+
+  function end(){
+    if(!geste) return;
+    const { el, wid, cible, valide, base } = geste;
+    el.classList.remove('dg-active', 'dg-invalid');
+    clearBadge(el);
+    clearShadow();
+    document.body.style.userSelect = '';
+
+    const retenu = valide ? cible : base;
+    const layout = readStore();
+    layout[wid] = retenu;
+    writeStore(layout);
+    place(el, retenu);
+    geste = null;
+    if(typeof SYNC !== 'undefined' && SYNC.enabled) SYNC.push?.();
+  }
+
+  function bind(){
+    const g = gridEl();
+    if(!g || g._dgBound) return;
+    g._dgBound = true;
+
+    // Capture : le moteur doit passer avant l'ancien drag & drop HTML5,
+    // qui reste en place pour les autres onglets.
+    g.addEventListener('pointerdown', (e) => {
+      if(e.button !== 0 && e.pointerType === 'mouse') return;
+      const el = e.target.closest?.('.dash-widget[data-wid]');
+      if(!el) return;
+      if(e.target.closest('.resize-handle')) return start(e, el, 'resize');
+      if(e.target.closest('.drag-handle'))   return start(e, el, 'move');
+    }, true);
+
+    window.addEventListener('pointermove', move, { passive:false });
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+
+    // La largeur d'une colonne dépend de celle de la fenêtre : on ne
+    // recalcule qu'au repos, jamais pendant un geste.
+    let t;
+    window.addEventListener('resize', () => {
+      clearTimeout(t);
+      t = setTimeout(() => { if(!geste) apply(); }, 200);
+    });
+  }
+
+  function reset(){
+    try{ localStorage.removeItem('majin_dash_layout_home'); }catch{}
+    if(typeof dashLayoutHome !== 'undefined') dashLayoutHome = null;
+    widgets().forEach(el => {
+      el.classList.remove('dg-placed');
+      el.style.gridColumn = ''; el.style.gridRow = '';
+    });
+    apply();
+  }
+
+  return { apply, bind, reset, readStore };
+})();
 
 tafMount('tafSlot');
 
