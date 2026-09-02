@@ -1,0 +1,42 @@
+# ── Headers Cloudflare Pages ──
+
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Le document principal n'est jamais mis en cache : une mise en ligne doit être
+# visible au rechargement suivant. Le mode hors-ligne a été abandonné pour ça.
+/
+  Cache-Control: no-cache, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+# TAF est servi en sous-dossier et embarqué en iframe par MAJIN.
+# SAMEORIGIN (hérité de /*) autorise cet embarquement, et lui seul.
+/taf/*
+  Cache-Control: no-cache, must-revalidate
+
+# L'API de synchronisation ne doit jamais être servie depuis un cache
+# intermédiaire, sous peine de renvoyer une révision périmée.
+/api/*
+  Cache-Control: no-store
+
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=3600
+
+/sw.js
+  Content-Type: application/javascript
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+/favicon-*.png
+  Cache-Control: public, max-age=604800, immutable
+
+/icon-*.png
+  Cache-Control: public, max-age=604800, immutable
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800, immutable
