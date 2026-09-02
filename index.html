@@ -3023,6 +3023,63 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 // ligne. Liste à jour : https://console.groq.com/docs/models
 const GROQ_MODEL = 'openai/gpt-oss-120b';
 
+// Budget par requête, en jetons. Le palier gratuit plafonne à 8 000 par
+// minute ; on vise nettement plus bas pour laisser la place à deux ou trois
+// échanges dans la même minute sans se faire refouler.
+const GROQ_MAX_HISTORIQUE = 8;    // messages conservés, hors prompt système
+const GROQ_MAX_APPS = 60;         // applications listées dans le prompt
+const GROQ_MAX_CAR_MSG = 1500;    // caractères par message d'historique
+
+// Appel unique à Groq, partagé par les deux points d'entrée du chat.
+//
+// Un 429 n'est pas une panne : c'est un « repasse dans N secondes ». Groq
+// indique le délai dans le message. On patiente puis on retente une fois,
+// plutôt que de renvoyer l'utilisateur à un pavé technique en anglais.
+async function groqChat(messages, maxTokens, temperature, cle){
+  const envoyer = () => fetch('/api/majin/groq/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+cle,'Content-Type':'application/json'},
+    body:JSON.stringify({model:GROQ_MODEL,messages,max_tokens:maxTokens,temperature})
+  });
+
+  let res=await envoyer();
+  if(res.status===429){
+    const data=await res.json().catch(()=>({}));
+    const msg=data?.error?.message||'';
+    // « Please try again in 12.7875s » — on lit le délai annoncé.
+    const m=msg.match(/try again in ([\d.]+)s/i);
+    const attente=Math.min(m?Math.ceil(parseFloat(m[1])*1000)+500:0,20000);
+    if(attente>0){
+      await new Promise(r=>setTimeout(r,attente));
+      res=await envoyer();
+    }
+    if(res.status===429){
+      const s=Math.ceil(attente/1000)||15;
+      return {erreur:'Quota Groq atteint pour cette minute. Réessaie dans '+
+        s+' seconde'+(s>1?'s':'')+' — le palier gratuit est limité à 8 000 jetons par minute.'};
+    }
+  }
+
+  const data=await res.json().catch(()=>({}));
+  if(data.choices?.[0]) return {reponse:data.choices[0].message.content};
+  return {erreur:data?.error?.message||'réponse vide'};
+}
+
+// Estimation grossière : en français, un jeton vaut environ quatre caractères.
+// Suffisant pour décider quoi élaguer — la facture exacte, c'est Groq qui la
+// tient, on cherche seulement à rester loin du plafond.
+const estimeJetons = (txt) => Math.ceil(String(txt || '').length / 4);
+
+// Ne garde que la fin de la conversation, en coupant sur un tour complet pour
+// ne jamais laisser une question sans sa réponse.
+function historiqueBorne(hist){
+  const recents = hist.slice(-GROQ_MAX_HISTORIQUE);
+  return recents.map(m => ({
+    role: m.role,
+    content: String(m.content || '').slice(0, GROQ_MAX_CAR_MSG),
+  }));
+}
+
 // ===== COMPACT MODE =====
 let isCompact=localStorage.getItem('majin_compact')==='true';
 function toggleCompact(){
@@ -3619,8 +3676,12 @@ async function braveSearch(query){
 function formatSearchContext(results){
   if(!results.length)return '';
   let ctx='Voici des résultats de recherche web récents pour répondre à la question :\n\n';
+  // Les descriptions renvoyées par le moteur peuvent faire plusieurs milliers
+  // de caractères. Non bornées, elles suffisent à elles seules à dépasser le
+  // quota par minute de Groq.
   results.slice(0,4).forEach((r,i)=>{
-    ctx+=`[${i+1}] ${r.title}\n${r.description||''}\nSource : ${r.url}\n\n`;
+    const desc=String(r.description||'').slice(0,320);
+    ctx+=`[${i+1}] ${r.title}\n${desc}\nSource : ${r.url}\n\n`;
   });
   ctx+='Basé sur ces résultats, réponds de façon précise et concise en français. Mentionne les sources pertinentes.';
   return ctx;
@@ -3675,17 +3736,20 @@ async function sendWithSearch(){
   chatHistory.push({role:'user',content:userMsg});
   showTyping();
   try{
-    const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
-      method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:800,temperature:0.5})
-    });
-    const data=await res.json();hideTyping();
-    if(data.choices?.[0]){
-      let reply=data.choices[0].message.content;
-      reply=handleActionCommands(reply);
+    const r=await groqChat(
+      [{role:'system',content:buildSystem()},...historiqueBorne(chatHistory)],
+      600,0.5,apiKey);
+    hideTyping();
+    if(r.reponse){
+      const reply=handleActionCommands(r.reponse);
       chatHistory.push({role:'assistant',content:reply});
       addMsgWithSources('MAJIN',reply,searchResults.length?searchResults:null);
-    } else addMsg('MAJIN','Erreur : '+(data.error?.message||'réponse vide'));
+    } else {
+      // La question reste dans l'historique alors qu'elle n'a pas eu de
+      // réponse : elle serait renvoyée au tour suivant, et recompterait.
+      chatHistory.pop();
+      addMsg('MAJIN',r.erreur);
+    }
   }catch(e){hideTyping();addMsg('MAJIN','Erreur de connexion.');}
   document.getElementById('sendBtn').disabled=false;document.getElementById('searchBtn').disabled=false;
   setSpeaking(false);
@@ -3752,9 +3816,15 @@ function getAllAppsForPrompt(){
 }
 
 function buildSystem(){
-  const apps=getAllAppsForPrompt();
+  // Liste tronquée : au-delà d'une soixantaine d'entrées, elle coûte plus de
+  // jetons qu'elle ne rend de service, et fait dépasser le quota par minute.
+  const toutes=getAllAppsForPrompt();
+  const apps=toutes.slice(0,GROQ_MAX_APPS);
+  const reste=toutes.length-apps.length;
   const appList=apps.length
-    ? '\n\nAPPLICATIONS DISPONIBLES (configurées par l\'utilisateur) :\n'+apps.map((a,i)=>`${i+1}. ${a.name} → ${a.url}`).join('\n')
+    ? '\n\nAPPLICATIONS DISPONIBLES (configurées par l\'utilisateur) :\n'
+      +apps.map((a,i)=>`${i+1}. ${a.name} → ${a.url}`).join('\n')
+      +(reste>0?`\n(+ ${reste} autres non listées — demande à Najim de préciser le nom.)`:'')
     : '';
   const now=new Date();
   const todayLong=now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -5646,17 +5716,19 @@ async function send(){
   const sugsEl=document.getElementById('sugs');if(sugsEl)sugsEl.style.display='none';
   chatHistory.push({role:'user',content:v});showTyping();
   try{
-    const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
-      method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:600,temperature:0.7})
-    });
-    const data=await res.json();hideTyping();
-    if(data.choices?.[0]){
-      let reply=data.choices[0].message.content;
-      reply=handleActionCommands(reply);
+    const r=await groqChat(
+      [{role:'system',content:buildSystem()},...historiqueBorne(chatHistory)],
+      600,0.7,apiKey);
+    hideTyping();
+    if(r.reponse){
+      const reply=handleActionCommands(r.reponse);
       chatHistory.push({role:'assistant',content:reply});addMsg('MAJIN',reply);
+    } else {
+      // Question sans réponse : on la retire pour qu'elle ne soit pas
+      // renvoyée — et recomptée — au tour suivant.
+      chatHistory.pop();
+      addMsg('MAJIN',r.erreur);
     }
-    else addMsg('MAJIN','Erreur : '+(data.error?.message||'réponse vide'));
   }catch(e){hideTyping();addMsg('MAJIN','Erreur de connexion. Vérifiez votre clé Groq.');}
   document.getElementById('sendBtn').disabled=false;setSpeaking(false);
 }
