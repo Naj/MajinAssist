@@ -1,8 +1,15 @@
-# Proxy Serper.dev → contourne CORS
-/api/serper/*  https://google.serper.dev/:splat  200
-
-# Proxy Groq API
-/api/groq/*    https://api.groq.com/:splat        200
-
-# Proxy RSS2JSON
-/api/rss/*     https://api.rss2json.com/v1/:splat 200
+# ── Redirections Cloudflare Pages ──
+#
+# Les anciens proxys /api/serper, /api/groq et /api/rss ont été retirés d'ici.
+# Raison : le routeur fourre-tout de TAF occupe /api/*, et les Pages Functions
+# sont évaluées AVANT ce fichier. Une redirection ne peut pas passer devant une
+# fonction — les appels tombaient donc sur TAF, qui répondait « Route inconnue ».
+#
+# Ils sont désormais des fonctions à part entière, sous functions/api/majin/ :
+#   /api/majin/groq/*      → api.groq.com
+#   /api/majin/serper/*    → google.serper.dev
+#   /api/majin/rss/*       → api.rss2json.com/v1
+#   /api/majin/ics-proxy   → relais des flux ICS
+#   /api/majin/sync/*      → synchronisation D1 des réglages
+#
+# Ce fichier est laissé en place, vide de règles, pour documenter ce choix.

@@ -1052,6 +1052,11 @@ body.is-electron .electron-close-btn{display:flex;}
 }
 #tab-home .drag-handle:hover{ background:rgba(226,74,74,0.3); }
 body.dash-editing-home #tab-home .dash-widget{ cursor:default; }
+/* Hors mode disposition, la grille est inerte : ni curseur de saisie, ni
+   poignée révélée au survol. */
+body:not(.dash-editing-home) #tab-home .drag-handle,
+body:not(.dash-editing-home) #tab-home .resize-handle{ display:none !important; }
+body.dash-editing-home #tab-home .dash-widget{ outline:1px dashed rgba(226,74,74,0.35); outline-offset:-1px; }
 
 .resize-handle{
   position:absolute;bottom:0;right:0;
@@ -1097,6 +1102,8 @@ body.dash-editing-home #tab-home .dash-widget{ cursor:default; }
 #tab-media .pan-title i:first-child{color:#0A6E31;}
 .dash-widget:hover .drag-handle,
 .dash-widget:hover .resize-handle,
+#tab-home .dash-widget:hover .drag-handle,
+#tab-home .dash-widget:hover .resize-handle,
 body.dash-editing-home #tab-home .resize-handle,
 body.dash-editing-home #tab-home .drag-handle,
 body.dash-editing .resize-handle,
@@ -3062,10 +3069,10 @@ function toggleDashEditHome(){
     // resterait actif en parallèle et déclencherait une image fantôme.
     w.draggable=false;
     const h=w.querySelector('.drag-handle');const r=w.querySelector('.resize-handle');
-    // Visibilité plutôt que display : ainsi la règle :hover continue de
-    // révéler les poignées quand on n'est pas en mode disposition.
-    if(h)h.style.display='flex';
-    if(r)r.style.display='flex';
+    // Les poignées ne s'affichent qu'en mode disposition : visibles en
+    // permanence, elles invitaient à des déplacements involontaires.
+    if(h)h.style.display=dashEditModeHome?'flex':'none';
+    if(r)r.style.display=dashEditModeHome?'flex':'none';
     injectDeleteBtn(w, dashEditModeHome);
   });
 }
@@ -3551,7 +3558,7 @@ function needsWebSearch(q){
 async function braveSearch(query){
   // Serper.dev — résultats Google, 2 500 req/mois gratuit, sans CB
   if(!braveKey)return[];
-  const res=await fetch('/api/serper/search',{
+  const res=await fetch('/api/majin/serper/search',{
     method:'POST',
     headers:{'X-API-KEY':braveKey,'Content-Type':'application/json'},
     body:JSON.stringify({q:query,gl:'fr',hl:'fr',num:6})
@@ -3637,7 +3644,7 @@ async function sendWithSearch(){
   chatHistory.push({role:'user',content:userMsg});
   showTyping();
   try{
-    const res=await fetch('/api/groq/openai/v1/chat/completions',{
+    const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:800,temperature:0.5})
     });
@@ -5106,13 +5113,13 @@ async function loadIcsCalendar(force){
   calIcsLoading=true;calIcsError='';
   if(calMode==='ics')renderCalView();
   try{
-    const res=await fetch('/api/ics-proxy?url='+encodeURIComponent(calIcsUrl),{cache:'no-store'});
+    const res=await fetch('/api/majin/ics-proxy?url='+encodeURIComponent(calIcsUrl),{cache:'no-store'});
     if(!res.ok){
       const corps=await res.text().catch(()=>'');
       // Un 404 sur le proxy signifie presque toujours que la fonction
       // Cloudflare functions/api/ics-proxy.js n'est plus déployée.
       const indice=res.status===404
-        ? ' — la fonction /api/ics-proxy ne répond pas. Vérifiez que functions/api/ics-proxy.js est bien dans le dépôt.'
+        ? ' — la fonction /api/majin/ics-proxy ne répond pas. Vérifiez que functions/api/majin/ics-proxy.js est bien dans le dépôt.'
         : '';
       throw new Error('Proxy ICS : erreur '+res.status+indice+(corps&&corps.length<160?' ('+corps.trim()+')':''));
     }
@@ -5608,7 +5615,7 @@ async function send(){
   const sugsEl=document.getElementById('sugs');if(sugsEl)sugsEl.style.display='none';
   chatHistory.push({role:'user',content:v});showTyping();
   try{
-    const res=await fetch('/api/groq/openai/v1/chat/completions',{
+    const res=await fetch('/api/majin/groq/openai/v1/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:buildSystem()},...chatHistory],max_tokens:600,temperature:0.7})
     });
@@ -6908,7 +6915,7 @@ async function fetchNews(src){
 
   // ── Proxy 1 : rss2json.com (le plus fiable, JSON) ──────────────────
   try{
-    const r=await fetch(`/api/rss/api.json?rss_url=${encodeURIComponent(feed.url)}&count=20`,{signal:AbortSignal.timeout(9000)});
+    const r=await fetch(`/api/majin/rss/api.json?rss_url=${encodeURIComponent(feed.url)}&count=20`,{signal:AbortSignal.timeout(9000)});
     if(r.ok){
       const d=await r.json();
       if(d.status==='ok'&&d.items?.length>=1){
@@ -7081,7 +7088,7 @@ async function fetchNewsFromUrl(rssUrl,label,siteUrl){
   let loaded=false;
   // Proxy 1
   try{
-    const r=await fetch(`/api/rss/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`,{signal:AbortSignal.timeout(9000)});
+    const r=await fetch(`/api/majin/rss/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`,{signal:AbortSignal.timeout(9000)});
     if(r.ok){const d=await r.json();if(d.status==='ok'&&d.items?.length){newsItems=d.items.slice(0,18).map(it=>({title:(it.title||'').trim(),url:it.link||siteUrl})).filter(it=>it.title);if(newsItems.length)loaded=true;}}
   }catch(e){}
   // Proxy 2
@@ -7157,6 +7164,14 @@ window.addEventListener('load',()=>{
   // L'Accueil passe par le moteur à placement explicite ; les autres onglets
   // conservent la disposition au fil de l'eau, qui leur convient.
   DG.apply(); DG.bind();
+  // État initial : disposition verrouillée. Les poignées restent invisibles
+  // jusqu'à ce que le bouton « Disposition » soit actionné.
+  document.querySelectorAll('#tab-home .dash-widget').forEach(w=>{
+    w.draggable=false;
+    const h=w.querySelector('.drag-handle');const r=w.querySelector('.resize-handle');
+    if(h)h.style.display='none';
+    if(r)r.style.display='none';
+  });
   if(dashLayout)applyDashLayout(dashLayout,'perso');
   if(dashLayoutPro)applyDashLayout(dashLayoutPro,'pro');
   else applyDashLayout(DEFAULT_LAYOUT_PRO,'pro');
@@ -8430,6 +8445,9 @@ const DG = (() => {
     // Capture : le moteur doit passer avant l'ancien drag & drop HTML5,
     // qui reste en place pour les autres onglets.
     g.addEventListener('pointerdown', (e) => {
+      // Verrou : hors mode disposition, aucune carte ne bouge. C'est le seul
+      // moyen d'éviter qu'un clic maintenu sur un en-tête déplace une vignette.
+      if(!document.body.classList.contains('dash-editing-home')) return;
       if(e.button !== 0 && e.pointerType === 'mouse') return;
       const el = e.target.closest?.('.dash-widget[data-wid]');
       if(!el) return;
