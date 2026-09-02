@@ -56,7 +56,29 @@ const STATUTS = {
 };
 
 const DEFAULT_SYNC = { enabled:false, space:"", lastAt:null, pushEndpoint:null };
-const API = "/api";
+/* Base des fonctions Cloudflare, déclarée dans index.html par
+   <meta name="taf-api">. Permet de servir TAF en sous-dossier d'un projet
+   qui expose déjà /api — c'est le cas quand TAF est embarqué dans MAJIN. */
+const API = (function () {
+  const m = document.querySelector('meta[name="taf-api"]');
+  return String((m && m.content) || "/api").replace(/\/+$/, "");
+})();
+
+/* ── Mode embarqué ──────────────────────────────────────────────────────────
+   TAF tourne soit en application autonome, soit dans la vignette MAJIN.
+   Le paramètre ?host=majin est explicite ; la comparaison window.self/top
+   sert de garde-fou si le paramètre saute (favori, lien partagé…). */
+const EMBED = (function () {
+  let framed = false;
+  try { framed = window.self !== window.top; } catch (e) { framed = true; }
+  return framed || new URLSearchParams(location.search).get("host") === "majin";
+})();
+const HOST_ORIGIN = location.origin;
+
+function hostPost(msg) {
+  if (!EMBED) return;
+  try { window.parent.postMessage(msg, HOST_ORIGIN); } catch (e) { /* origine refusée */ }
+}
 const TOMBSTONE_DAYS = 120;
 
 /* Déclaré avant le chargement : migrateSettings() s'exécute pendant load(). */
@@ -364,6 +386,9 @@ function refreshCounters() {
   $("#head-count").textContent = a.length;
   $("#head-late").textContent = late;
   $("#head-sub-word").textContent = a.length > 1 ? "tâches en cours" : "tâche en cours";
+  /* MAJIN affiche ce compteur dans l'en-tête de la vignette : il doit refléter
+     l'état réel sans que l'utilisateur ait à déplier TAF. */
+  hostPost({ type:"taf:stats", count:a.length, late });
   $("#badge-taches").textContent = a.length;
   $("#badge-archives").textContent = archived().length;
   const opts = list => {
@@ -1595,6 +1620,93 @@ function addNote(text) {
   return true;
 }
 
+/* ── Commandes reçues de MAJIN ───────────────────────────────────────────────
+   MAJIN délègue à TAF tout ce qui relève de la tâche : ce que l'assistant
+   dicte, et la reprise des anciennes vignettes « Notes » et « Rappels ». */
+function majinAddTask(fields) {
+  const sujet = String((fields && fields.sujet) || "").trim();
+  if (!sujet) return false;
+  const now = new Date().toISOString();
+  const t = { id:uid(), date:todayISO(), sujet, collaboration:"", objectif:"",
+              echeance:"", action:"", commentaire:"", rex:"",
+              archived:false, deleted:false,
+              ...taskDefaults(),
+              createdAt:now, updatedAt:now };
+  /* Une échéance n'est retenue que si elle est bien au format ISO : une date
+     mal formée passerait les filtres et polluerait le tableau de bord. */
+  const e = String((fields && fields.echeance) || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(e)) t.echeance = e;
+  if (fields && fields.collaboration) t.collaboration = String(fields.collaboration).trim();
+  data.tasks.unshift(t);
+  save(); queueSync(); renderAll();
+  return true;
+}
+
+/* Reprise des anciennes données MAJIN, une seule fois. Les identifiants
+   d'origine sont conservés en marqueur pour qu'un second passage — import
+   rejoué, synchro croisée — ne crée pas de doublons. */
+function majinImportLegacy(payload) {
+  const seen = new Set(data.tasks.map(t => t.legacyId).filter(Boolean));
+  const now = new Date().toISOString();
+  let notesAdded = 0, tasksAdded = 0;
+
+  (payload && payload.notes || []).forEach(n => {
+    const key = "note:" + (n.id || n.text);
+    if (!n || !n.text || seen.has(key)) return;
+    data.tasks.unshift({ id:"n" + uid(), kind:"note", texte:String(n.text),
+                         legacyId:key, createdAt:now, updatedAt:now });
+    seen.add(key); notesAdded++;
+  });
+
+  (payload && payload.reminders || []).forEach(r => {
+    const key = "rem:" + (r.id || r.title);
+    if (!r || !r.title || seen.has(key)) return;
+    const t = { id:uid(), date:todayISO(), sujet:String(r.title), collaboration:"",
+                objectif:"", echeance:"", action:"", commentaire:"", rex:"",
+                archived:false, deleted:false, legacyId:key,
+                ...taskDefaults(), createdAt:now, updatedAt:now };
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(r.date || ""))) t.echeance = r.date;
+    if (r.type === "birthday") t.commentaire = "Anniversaire — se répétait chaque année dans MAJIN.";
+    data.tasks.unshift(t);
+    seen.add(key); tasksAdded++;
+  });
+
+  if (notesAdded || tasksAdded) { save(); queueSync(); renderAll(); }
+  return { notesAdded, tasksAdded };
+}
+
+if (EMBED) {
+  window.addEventListener("message", (e) => {
+    if (e.origin !== HOST_ORIGIN) return;
+    const d = e.data || {};
+    /* MAJIN pinge l'iframe après avoir posé son listener : TAF répond
+       immédiatement avec son état courant, sans attendre le prochain
+       refreshCounters(). Élimine la race condition de démarrage. */
+    if (d.type === "majin:ping") {
+      const a = actives();
+      const late = a.filter(t => { const dd = daysUntil(t.echeance); return dd !== null && dd < 0; }).length;
+      hostPost({ type: "taf:stats", count: a.length, late });
+      return;
+    }
+    if (d.type === "majin:add-task") {
+      const ok = majinAddTask(d);
+      hostPost({ type:"taf:ack", of:"add-task", ok, ref:d.ref });
+      if (ok) toast("Tâche ajoutée depuis MAJIN.", "ok");
+    }
+    if (d.type === "majin:add-note") {
+      const ok = addNote(d.texte);
+      hostPost({ type:"taf:ack", of:"add-note", ok, ref:d.ref });
+    }
+    if (d.type === "majin:import-legacy") {
+      const r = majinImportLegacy(d);
+      hostPost({ type:"taf:ack", of:"import-legacy", ok:true, ref:d.ref, ...r });
+      if (r.notesAdded || r.tasksAdded) {
+        toast("Reprise MAJIN : " + r.tasksAdded + " tâche(s), " + r.notesAdded + " note(s).", "ok");
+      }
+    }
+  });
+}
+
 function deleteNote(id) {
   const n = data.tasks.find(t => t.id === id);
   if (!n) return;
@@ -2627,6 +2739,27 @@ window.addEventListener("beforeinstallprompt", e => {
 /* ---------- Démarrage ---------- */
 function boot() {
   if (checkShareMode()) return;
+
+  if (EMBED) {
+    document.documentElement.classList.add("is-embed");
+    const grow = $("#btn-embed-size");
+    if (grow) {
+      grow.hidden = false;
+      grow.addEventListener("click", () => hostPost({ type:"taf:expand" }));
+    }
+    /* MAJIN prévient quand la vignette passe en plein écran : on adapte le
+       bouton pour qu'il propose l'action inverse. */
+    window.addEventListener("message", (e) => {
+      if (e.origin !== HOST_ORIGIN) return;
+      const d = e.data || {};
+      if (d.type !== "majin:mode" || !grow) return;
+      const full = d.mode === "full";
+      grow.textContent = full ? "⤡" : "⤢";
+      grow.title = full ? "Réduire" : "Agrandir";
+      grow.onclick = () => hostPost({ type: full ? "taf:collapse" : "taf:expand" });
+    });
+  }
+
   if (migrated) save();
   purgeTombstones();
   migrateTasks();
@@ -2638,7 +2771,7 @@ function boot() {
   renderAll();
   setSyncState(data.sync.enabled ? "pending" : "off");
 
-  if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator && !EMBED) {
     /* Un service worker déjà en place signifie que l'application tournait
        sur une version antérieure : quand la nouvelle prend la main, on
        recharge une fois pour que l'écran corresponde au code servi. */
@@ -2658,7 +2791,7 @@ function boot() {
       .catch(() => {});
   }
 
-  const started = (data.settings.intro !== false && window.PICIntro)
+  const started = (!EMBED && data.settings.intro !== false && window.PICIntro)
     ? window.PICIntro.play({ sound: data.settings.introSon !== false })
     : Promise.resolve();
 
