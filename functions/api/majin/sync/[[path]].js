@@ -49,15 +49,34 @@ function safeEqual(a, b) {
   return diff === 0;
 }
 
-function authorize(request, env) {
+// Empreinte SHA-256, en hexadécimal minuscule.
+//
+// Les en-têtes HTTP transportent du Latin-1. Une clé contenant un accent — un
+// « é », par exemple — part sur un octet que le runtime relit ensuite en UTF-8,
+// où il est invalide : il devient U+FFFD et la comparaison échoue toujours.
+// Transmettre l'empreinte plutôt que la clé règle le problème pour de bon, et
+// au passage le secret ne circule plus en clair.
+async function sha256hex(txt) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('majin:' + txt));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function authorize(request, env) {
   if (!env.MAJIN_SYNC_KEY) {
     return json({ error: 'MAJIN_SYNC_KEY absent des variables du projet Cloudflare.' }, 500);
   }
   const given = request.headers.get('X-Majin-Key');
-  if (!safeEqual(given, env.MAJIN_SYNC_KEY)) {
-    return json({ error: 'Clé de synchronisation invalide.' }, 401);
-  }
-  return null;
+  if (!given) return json({ error: 'Clé de synchronisation absente.' }, 401);
+
+  const attendu = await sha256hex(env.MAJIN_SYNC_KEY);
+
+  // On accepte encore la clé en clair : une machine restée sur l'ancienne
+  // version continue de fonctionner le temps qu'elle soit mise à jour. À
+  // retirer une fois tous vos navigateurs passés en v48.
+  if (safeEqual(given, attendu)) return null;
+  if (safeEqual(given, env.MAJIN_SYNC_KEY)) return null;
+
+  return json({ error: 'Clé de synchronisation invalide.' }, 401);
 }
 
 function readNs(url) {
@@ -263,7 +282,7 @@ export async function onRequest(context) {
     return json({ error: 'Binding D1 « DB_MAJIN » absent du projet Cloudflare Pages.' }, 500);
   }
 
-  const denied = authorize(request, env);
+  const denied = await authorize(request, env);
   if (denied) return denied;
 
   const url = new URL(request.url);
