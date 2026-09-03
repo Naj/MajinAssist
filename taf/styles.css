@@ -1289,7 +1289,9 @@ html.is-embed .app-head .ghost-btn{
 html.is-embed .app-head .ghost-btn:hover{ background:var(--o-black); color:var(--o-white); }
 
 /* La barre d'onglets récupère la place, en laissant le couloir de l'en-tête. */
-html.is-embed .tabs{ padding-top:0; padding-right:96px; }
+/* L'en-tête étant sorti du flux, la barre d'onglets ne doit plus réserver
+   ses 66 px : elle recouvrait « Nouvelle tâche » et la recherche. */
+html.is-embed .tabs{ top:0; padding-top:0; padding-right:96px; }
 html.is-embed .tab{ padding:9px 12px; font-size:12px; }
 
 html.is-embed .app-main{ padding-top:10px; padding-bottom:20px; }
@@ -1389,3 +1391,99 @@ html.is-embed .notes-list{ max-height:180px; overflow-y:auto; }
    correct, mais l'espace est étroit — on élargit au maximum. */
 html.is-embed .sheet{ width:min(100%, 560px); }
 html.is-embed .synth{ width:96%; max-height:92%; }
+
+/* ============================================================
+   Vue Focus — pile de tâches groupée par urgence
+   N'existe qu'en vignette ; le tableau reste intact ailleurs.
+   ============================================================ */
+.focus-wrap{ display:block; }
+html.focus-on .hint{ display:none; }
+
+/* ── Bandeau de synthèse ── */
+.focus-sum{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
+.fsum{
+  display:inline-flex; align-items:baseline; gap:5px;
+  background:var(--o-white); border:2px solid var(--line);
+  padding:5px 11px; font-size:11px; cursor:pointer;
+  transition:border-color .16s ease, background .16s ease;
+}
+.fsum b{ font-size:14px; font-weight:800; }
+.fsum span{ color:var(--o-grey-2); }
+.fsum:hover{ border-color:var(--o-orange); }
+.fsum.is-on{ border-color:var(--o-orange); background:var(--o-yellow-l); }
+/* Un retard se signale de lui-même, sans qu'on ait à lire le chiffre. */
+.fsum.is-late b{ color:#b8332e; }
+.fsum.is-late{ border-color:#e9b7b5; }
+.fsum-clear{ margin-left:auto; color:var(--o-grey-2); }
+
+/* ── Ajout en une ligne ── */
+.focus-add{ display:flex; gap:6px; margin-bottom:10px; }
+.focus-add input{
+  flex:1; min-width:0; background:var(--o-white);
+  border:2px solid var(--line); padding:8px 11px; font-size:13px;
+  transition:border-color .16s ease;
+}
+.focus-add input:focus{ border-color:var(--o-orange); outline:none; }
+.focus-add .primary-btn{ padding:8px 15px; font-size:15px; line-height:1; }
+
+/* ── Groupes ── */
+.fgrp{ margin-bottom:8px; }
+.fgrp-h{
+  width:100%; display:flex; align-items:center; gap:7px;
+  background:var(--o-grey-0, #f2f2f4); border:0; border-left:3px solid var(--line);
+  padding:5px 10px; cursor:pointer;
+  font-size:9.5px; font-weight:800; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--o-grey-2); text-align:left;
+}
+.fgrp-h:hover{ background:var(--o-yellow-l); }
+.fgrp.is-late .fgrp-h{ background:#fdecec; color:#b8332e; border-left-color:#b8332e; }
+.fgrp-n{ margin-left:auto; background:rgba(0,0,0,.1); border-radius:9px; padding:0 6px; font-size:9px; }
+.fgrp-caret{ transition:transform .18s ease; display:inline-block; }
+.fgrp.is-folded .fgrp-caret{ transform:rotate(-90deg); }
+.fgrp-ok{ padding:8px 12px; font-size:11.5px; color:var(--o-grey-2); background:var(--o-white); }
+
+/* ── Ligne de tâche ── */
+.frow{
+  width:100%; display:flex; align-items:center; gap:9px;
+  background:var(--o-white); border:0; border-bottom:1px solid var(--line);
+  padding:7px 10px; cursor:pointer; text-align:left;
+  transition:background .14s ease;
+}
+.frow:hover{ background:var(--o-yellow-l); }
+.frow-rail{ width:3px; height:26px; flex-shrink:0; background:var(--o-grey-1); }
+.frow-mid{ flex:1; min-width:0; display:block; }
+.frow-s{
+  display:block; font-size:12.5px; font-weight:700; color:var(--o-black);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.frow-m{
+  display:block; font-size:10.5px; color:var(--o-grey-2); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.frow-d{ font-size:10.5px; font-weight:700; color:var(--o-grey-2); flex-shrink:0; font-variant-numeric:tabular-nums; }
+.frow-b{
+  font-size:8.5px; font-weight:800; letter-spacing:.05em;
+  padding:2px 6px; flex-shrink:0; color:var(--o-white); background:var(--o-grey-2);
+}
+/* Les classes de statut viennent de statusOf() : une seule source de couleur
+   pour le tableau, le kanban et la vue Focus. */
+/* Échéance — classes rendues par statusOf() pour une tâche « en cours ». */
+.frow-rail.st-late,  .frow-b.st-late  { background:#b8332e; }
+.frow-rail.st-today, .frow-b.st-today { background:#E88000; }
+.frow-rail.st-soon,  .frow-b.st-soon  { background:#C99700; }
+.frow-rail.st-far,   .frow-b.st-far   { background:#3f8f5f; }
+.frow-rail.st-none,  .frow-b.st-none  { background:var(--o-grey-1); }
+.frow-rail.st-done,  .frow-b.st-done  { background:#3f8f5f; }
+/* Statut explicite — statusOf() rend « st-statut st-<clé> », la clé étant
+   celle de STATUTS : en-cours, en-attente, bloquee, deleguee. */
+.frow-rail.st-en-cours,   .frow-b.st-en-cours   { background:var(--o-orange); }
+.frow-rail.st-en-attente, .frow-b.st-en-attente { background:var(--o-yellow-d); }
+.frow-rail.st-bloquee,    .frow-b.st-bloquee    { background:var(--o-purple-d); }
+.frow-rail.st-deleguee,   .frow-b.st-deleguee   { background:var(--o-blue-d); }
+
+.focus-empty{ padding:18px; text-align:center; color:var(--o-grey-2); font-size:12.5px; }
+
+/* En vue Focus, la barre d'outils se réduit encore : le tri par colonne et
+   l'impression n'ont plus de cible visible. */
+html.focus-on .toolbar #btn-print,
+html.focus-on .toolbar #btn-columns{ display:none; }

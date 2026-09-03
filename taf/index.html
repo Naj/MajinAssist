@@ -78,6 +78,7 @@
         </div>
       </details>
       <div class="toolbar-end">
+        <button class="ghost-btn" id="btn-focus" hidden>Tableau</button>
         <button class="ghost-btn" id="btn-kanban">Kanban</button>
         <button class="ghost-btn" id="btn-columns">Colonnes</button>
         <button class="ghost-btn" id="btn-print">Imprimer</button>
@@ -90,6 +91,19 @@
         <tbody id="body-taches"></tbody>
       </table>
     </div>
+
+    <!-- Vue Focus — n'apparaît qu'en vignette. Le tableau reste seul maître
+         sur /taf/ et en plein écran, avec tri, édition en cellule et
+         impression. On ajoute une lecture, on n'en retire aucune. -->
+    <section class="focus-wrap" id="focus-view" hidden>
+      <div class="focus-sum" id="focus-sum" role="group" aria-label="Répartition des tâches"></div>
+      <div class="focus-add">
+        <input type="text" id="focus-add-input" placeholder="Nouvelle tâche — tapez et validez…" aria-label="Ajouter une tâche">
+        <button class="primary-btn" id="focus-add-btn" aria-label="Ajouter">+</button>
+      </div>
+      <div class="focus-list" id="focus-list"></div>
+      <p class="focus-empty" id="focus-empty" hidden>Rien à afficher avec ces filtres.</p>
+    </section>
 
     <div class="kanban-wrap" id="kanban-board"></div>
     <div class="empty" id="empty-taches" hidden>

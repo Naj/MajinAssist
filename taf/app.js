@@ -2545,9 +2545,196 @@ function setView(v) {
 }
 
 /* Rend la vue des tâches, tableau ou kanban selon le mode actif. */
+/* ============================================================
+   VUE FOCUS — lecture adaptée à la vignette MAJIN
+
+   Une vignette de tableau de bord répond à « qu'est-ce qui presse », pas
+   « montre-moi onze colonnes ». Les tâches sont donc groupées par urgence et
+   réduites à deux lignes : le sujet, puis la collaboration et l'objectif en
+   second plan.
+
+   Ce n'est qu'un affichage de plus : le tableau reste seul maître sur /taf/ et
+   en plein écran, avec son tri, son édition en cellule et son impression.
+   ============================================================ */
+
+const FOCUS_PLIS = "taf-focus-plis";
+
+// Le tri par échéance est la raison d'être de cette vue : il ne suit pas le
+// tri de colonne choisi par l'utilisateur, qui reprend la main au tableau.
+const FOCUS_GROUPES = [
+  { id:"retard",  label:"En retard",     test:d => d !== null && d < 0 },
+  { id:"jour",    label:"Aujourd'hui",   test:d => d === 0 },
+  { id:"semaine", label:"Cette semaine", test:d => d !== null && d > 0 && d <= 7 },
+  { id:"mois",    label:"Ce mois",       test:d => d !== null && d > 7 && d <= 31 },
+  { id:"apres",   label:"Plus tard",     test:d => d !== null && d > 31 },
+  { id:"sans",    label:"Sans échéance", test:d => d === null },
+];
+
+function focusPlis() {
+  try { return JSON.parse(localStorage.getItem(FOCUS_PLIS) || "{}") || {}; }
+  catch (e) { return {}; }
+}
+function focusBasculePli(id) {
+  const p = focusPlis();
+  p[id] = !p[id];
+  try { localStorage.setItem(FOCUS_PLIS, JSON.stringify(p)); } catch (e) {}
+  renderFocus();
+}
+
+// Échéance en clair : « demain » se lit plus vite qu'une date à déchiffrer.
+function focusEcheance(d) {
+  if (d === null) return "—";
+  if (d < -1) return Math.abs(d) + " j de retard";
+  if (d === -1) return "hier";
+  if (d === 0) return "aujourd'hui";
+  if (d === 1) return "demain";
+  if (d <= 7) return "dans " + d + " j";
+  return "";
+}
+
+function renderFocus() {
+  const wrap = $("#focus-list");
+  if (!wrap) return;
+  const liste = filteredActives();
+
+  // ── Bandeau de synthèse ──────────────────────────────────────────────────
+  // Les compteurs portent le filtre correspondant : voir « 3 en retard » et ne
+  // pas pouvoir cliquer dessus serait une frustration gratuite.
+  const retard = liste.filter(t => { const d = daysUntil(t.echeance); return d !== null && d < 0; }).length;
+  const semaine = liste.filter(t => { const d = daysUntil(t.echeance); return d !== null && d >= 0 && d <= 7; }).length;
+  const bloquees = liste.filter(t => (t.statut || "en-cours") === "bloquee").length;
+
+  const sum = $("#focus-sum");
+  if (sum) {
+    const puce = (cle, val, txt, actif, cls) =>
+      `<button class="fsum ${cls || ""}${actif ? " is-on" : ""}" data-filtre="${cle}" data-val="${val}">`
+      + `<b>${txt.n}</b> <span>${txt.l}</span></button>`;
+    sum.innerHTML =
+      puce("ech", "late", { n:retard, l:"en retard" }, filters.ech === "late", retard ? "is-late" : "") +
+      puce("ech", "7", { n:semaine, l:"sous 7 j" }, filters.ech === "7", "") +
+      puce("statut", "bloquee", { n:bloquees, l:"bloquées" }, filters.statut === "bloquee", "") +
+      `<button class="fsum fsum-clear" data-filtre="clear" data-val="">Tout</button>`;
+  }
+
+  // ── Groupes ──────────────────────────────────────────────────────────────
+  const parGroupe = {};
+  FOCUS_GROUPES.forEach(g => parGroupe[g.id] = []);
+  liste.forEach(t => {
+    const d = daysUntil(t.echeance);
+    const g = FOCUS_GROUPES.find(x => x.test(d)) || FOCUS_GROUPES[FOCUS_GROUPES.length - 1];
+    parGroupe[g.id].push(t);
+  });
+  // À l'intérieur d'un groupe, le plus urgent d'abord ; les sans-échéance
+  // gardent l'ordre du tableau.
+  Object.values(parGroupe).forEach(arr => arr.sort((a, b) =>
+    String(a.echeance || "9999").localeCompare(String(b.echeance || "9999"))));
+
+  const plis = focusPlis();
+  let html = "";
+
+  FOCUS_GROUPES.forEach(g => {
+    const arr = parGroupe[g.id];
+    // Un groupe vide n'apprend rien — sauf « En retard », dont l'absence est
+    // une bonne nouvelle qui mérite d'être affichée.
+    if (!arr.length && g.id !== "retard") return;
+    const plie = !!plis[g.id];
+
+    html += `<div class="fgrp${g.id === "retard" ? " is-late" : ""}${plie ? " is-folded" : ""}">`
+      + `<button class="fgrp-h" data-pli="${g.id}" aria-expanded="${!plie}">`
+      + `<span class="fgrp-caret">▾</span>${g.label}`
+      + `<span class="fgrp-n">${arr.length}</span></button>`;
+
+    if (!plie) {
+      if (!arr.length) {
+        html += `<div class="fgrp-ok">Rien en retard</div>`;
+      } else {
+        arr.forEach(t => {
+          const st = statusOf(t);
+          const d = daysUntil(t.echeance);
+          const meta = [t.collaboration, t.objectif].filter(Boolean).join(" · ");
+          const quand = focusEcheance(d) || (t.echeance ? frDate(t.echeance) : "—");
+          html += `<button class="frow" data-open="${t.id}">`
+            + `<span class="frow-rail ${st.cls}"></span>`
+            + `<span class="frow-mid">`
+            +   `<span class="frow-s">${escapeHtml(t.sujet || "Sans sujet")}</span>`
+            +   (meta ? `<span class="frow-m">${escapeHtml(meta)}</span>` : "")
+            + `</span>`
+            + `<span class="frow-d">${escapeHtml(quand)}</span>`
+            + `<span class="frow-b ${st.cls}">${escapeHtml(st.label)}</span>`
+            + `</button>`;
+        });
+      }
+    }
+    html += `</div>`;
+  });
+
+  wrap.innerHTML = html;
+  const vide = $("#focus-empty");
+  if (vide) vide.hidden = liste.length > 0;
+}
+
+// Date courte, pour les échéances lointaines que focusEcheance laisse vides.
+function frDate(iso) {
+  const p = String(iso).split("-");
+  return p.length === 3 ? p[2] + "/" + p[1] : iso;
+}
+
+function escapeHtml(t) {
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ── Ajout en une ligne ──────────────────────────────────────────────────────
+// Crée directement, sans ouvrir la fiche : sur un tableau de bord, noter une
+// tâche doit coûter une frappe, pas un aller-retour dans un panneau.
+function focusAjout() {
+  const input = $("#focus-add-input");
+  if (!input) return;
+  const sujet = input.value.trim();
+  if (!sujet) return;
+  const now = new Date().toISOString();
+  data.tasks.unshift({
+    id:uid(), date:todayISO(), sujet, collaboration:"", objectif:"",
+    echeance:"", action:"", commentaire:"", rex:"",
+    archived:false, deleted:false, ...taskDefaults(),
+    createdAt:now, updatedAt:now,
+  });
+  input.value = "";
+  save(); queueSync(); renderAll();
+  toast("Tâche ajoutée.", "ok");
+}
+
+// ── Bascule Focus / Tableau ─────────────────────────────────────────────────
+// Mémorisée hors des réglages synchronisés : c'est un confort d'affichage lié
+// à la taille de l'écran, pas une préférence à propager sur les autres machines.
+function focusActif() {
+  if (!EMBED) return false;
+  return localStorage.getItem("taf-focus-off") !== "1";
+}
+function basculeFocus() {
+  localStorage.setItem("taf-focus-off", focusActif() ? "1" : "0");
+  appliqueFocus();
+}
+function appliqueFocus() {
+  const on = focusActif();
+  const vue = $("#focus-view");
+  const tab = document.querySelector("#view-taches .table-scroll");
+  const btn = $("#btn-focus");
+  if (vue) vue.hidden = !on;
+  if (tab) tab.style.display = on ? "none" : "";
+  if (btn) { btn.hidden = !EMBED; btn.textContent = on ? "Tableau" : "Focus"; }
+  document.documentElement.classList.toggle("focus-on", on);
+  if (on) renderFocus();
+}
+
 function renderView() {
   if (data.settings.kanban) { renderKanban(); refreshCounters(); }
   else renderTable();
+  // Le tableau est toujours construit, même masqué : la vue Focus n'est
+  // qu'une seconde lecture des mêmes données, et la bascule doit être
+  // instantanée dans les deux sens.
+  if (typeof appliqueFocus === "function" && EMBED) appliqueFocus();
 }
 
 function renderAll() {
@@ -2562,6 +2749,40 @@ function wire() {
   $("#empty-taches").addEventListener("click", e => {
     if (e.target.dataset.act === "new-from-empty") newTask();
   });
+  $("#btn-focus").addEventListener("click", basculeFocus);
+  $("#focus-add-btn").addEventListener("click", focusAjout);
+  $("#focus-add-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") focusAjout();
+  });
+
+  // Délégation : la liste est reconstruite à chaque rendu, des écouteurs posés
+  // sur les lignes seraient perdus au premier rafraîchissement.
+  $("#focus-list").addEventListener("click", e => {
+    const pli = e.target.closest("[data-pli]");
+    if (pli) return focusBasculePli(pli.dataset.pli);
+    const row = e.target.closest("[data-open]");
+    if (row) openSheet(row.dataset.open);
+  });
+
+  $("#focus-sum").addEventListener("click", e => {
+    const b = e.target.closest("[data-filtre]");
+    if (!b) return;
+    if (b.dataset.filtre === "clear") {
+      filters.ech = ""; filters.statut = "";
+    } else if (b.dataset.filtre === "ech") {
+      filters.ech = filters.ech === b.dataset.val ? "" : b.dataset.val;
+      filters.statut = "";
+    } else {
+      filters.statut = filters.statut === b.dataset.val ? "" : b.dataset.val;
+      filters.ech = "";
+    }
+    // Les listes déroulantes doivent refléter le filtre posé depuis le
+    // bandeau, sinon l'utilisateur y lit l'inverse de ce qu'il voit.
+    const se = $("#f-echeance"); if (se) se.value = filters.ech;
+    const ss = $("#f-statut");   if (ss) ss.value = filters.statut;
+    renderView();
+  });
+
   $("#btn-print").addEventListener("click", () => doPrint("taches"));
   $("#btn-print-arch").addEventListener("click", () => doPrint("archives"));
   $("#btn-columns").addEventListener("click", openCfg);
