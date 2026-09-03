@@ -453,6 +453,20 @@ function refreshCounters() {
   fillSelect($("#f-collab"), opts(actives()), filters.collab, "Toutes collaborations");
   fillSelect($("#f-collab-arch"), opts(archived()), filters.collabArch, "Toutes collaborations");
   refreshTagSelects();
+  refreshFilterBadge();
+}
+
+/* En vignette, les quatre filtres sont repliés. Sans indication, une liste
+   raccourcie par un filtre oublié passe pour une liste vide : la pastille
+   compte les filtres actifs, et le repli s'ouvre de lui-même s'il y en a. */
+function refreshFilterBadge() {
+  const badge = $("#tbfCount");
+  if (!badge) return;
+  const n = [filters.collab, filters.statut, filters.tag, filters.ech]
+    .filter(v => v !== "" && v != null).length;
+  badge.textContent = n ? String(n) : "";
+  const fold = $("#tbFilters");
+  if (fold && n && !fold.open) fold.open = true;
 }
 function fillSelect(sel, values, current, placeholder) {
   sel.innerHTML = "";

@@ -1260,38 +1260,132 @@ select.cell-editor:focus{outline:none;box-shadow:0 0 0 3px rgba(255,121,0,.25)}
 
 /* ============================================================
    Mode embarqué — TAF dans la vignette MAJIN
-   MAJIN affiche déjà un en-tête pour la vignette (titre, compteur,
-   recharger, agrandir). On retire donc le nôtre pour ne pas empiler
-   deux bandeaux, mais on garde le point de synchro et l'engrenage :
-   sans eux, les réglages deviendraient inaccessibles depuis MAJIN.
+
+   La contrainte n'est pas la largeur mais la HAUTEUR. Une vignette fait
+   quelques centaines de pixels de haut : l'en-tête, les filtres et la barre
+   d'outils mangeaient l'espace au point de ne laisser voir que trois tâches.
+   Tout ce qui suit vise à rendre des lignes de tableau visibles.
    ============================================================ */
 html.is-embed, html.is-embed body{ background:var(--page); }
 html.is-embed body{ overflow-y:auto; }
 
+/* L'en-tête ne prend plus de ligne : il se pose au-dessus de la barre
+   d'onglets, à droite. MAJIN affiche déjà le titre et le compteur ; ne restent
+   ici que le point de synchro et l'engrenage, sans lesquels les réglages
+   deviendraient inaccessibles depuis la vignette. */
 html.is-embed .app-head{
-  padding-top:6px; padding-bottom:6px;
-  justify-content:flex-end;
+  position:absolute; top:0; right:0; left:auto;
+  width:auto; background:transparent; padding:5px 8px;
+  z-index:50; gap:6px;
 }
 html.is-embed .head-left,
 html.is-embed .majin-block,
 html.is-embed #btn-install{ display:none; }
 html.is-embed .head-right{ gap:6px; }
-
-html.is-embed .app-main{
-  padding-top:10px;
-  padding-bottom:24px;
+html.is-embed .app-head .ghost-btn{
+  background:transparent; color:var(--o-grey-2);
+  border-color:transparent; padding:3px 7px;
 }
-html.is-embed .hint{ display:none; }
-html.is-embed .tabs{ padding-top:0; }
+html.is-embed .app-head .ghost-btn:hover{ background:var(--o-black); color:var(--o-white); }
 
-/* Le panneau latéral et les modales sont posés en position:fixed : dans une
-   iframe, « fixed » se cale sur l'iframe, pas sur la page hôte. Le rendu reste
-   donc correct, mais l'espace est étroit — on élargit la feuille au maximum. */
+/* La barre d'onglets récupère la place, en laissant le couloir de l'en-tête. */
+html.is-embed .tabs{ padding-top:0; padding-right:96px; }
+html.is-embed .tab{ padding:9px 12px; font-size:12px; }
+
+html.is-embed .app-main{ padding-top:10px; padding-bottom:20px; }
+html.is-embed .hint{ display:none; }
+
+/* ── Barre d'outils sur une seule ligne ───────────────────────────────────
+   « Nouvelle tâche » et la recherche restent visibles ; les quatre filtres
+   se replient. Un filtre actif se signale par une pastille, pour qu'on ne
+   cherche pas pourquoi la liste est courte. */
+html.is-embed .toolbar{ gap:8px; margin-bottom:10px; align-items:center; }
+html.is-embed .toolbar .search-wrap{ flex:1 1 180px; min-width:0; }
+html.is-embed .toolbar input[type=search]{ padding:7px 10px; font-size:13px; }
+html.is-embed .primary-btn,
+html.is-embed .toolbar .ghost-btn{ padding:7px 12px; font-size:12px; white-space:nowrap; }
+
+.tb-filters{ position:relative; }
+.tb-filters > summary{
+  list-style:none; cursor:pointer; user-select:none;
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--o-white); border:2px solid var(--line);
+  padding:7px 12px; font-size:12px; font-weight:700;
+  white-space:nowrap; transition:border-color .18s ease;
+}
+.tb-filters > summary::-webkit-details-marker{ display:none; }
+.tb-filters > summary:hover{ border-color:var(--o-orange); }
+.tb-filters[open] > summary{ border-color:var(--o-orange); }
+.tbf-ic{ color:var(--o-orange); }
+.tbf-count:not(:empty){
+  background:var(--o-orange); color:var(--o-white);
+  font-size:10px; padding:1px 6px; border-radius:10px;
+}
+.tbf-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:8px; padding:10px 0 2px;
+}
+.tbf-grid select{ width:100%; min-width:0; }
+/* Hors vignette, les filtres restent dépliés : l'espace ne manque pas. */
+html:not(.is-embed) .tb-filters > summary{ display:none; }
+html:not(.is-embed) .tbf-grid{ display:contents; }
+
+/* ── Tableau ──────────────────────────────────────────────────────────────
+   Le tableau exige 940 px. En vignette on le laisse défiler plutôt que de
+   l'écraser, et on borne sa hauteur pour que les notes restent atteignables
+   sans un second défilement imbriqué. */
+html.is-embed .table-scroll{ max-height:none; }
+html.is-embed .pic-table{ font-size:12.5px; }
+html.is-embed .pic-table th{ padding:7px 6px; font-size:11px; }
+html.is-embed .cell{ min-height:30px; padding:4px; }
+
+/* Sous 1100 px de vignette, la pile de fiches devient plus lisible que onze
+   colonnes comprimées. On réutilise la mise en fiches déjà écrite pour le
+   mobile — les cellules portent déjà leur data-label. */
+@media (max-width:1100px){
+  html.is-embed .table-scroll{ border:0; background:transparent; overflow:visible; }
+  html.is-embed .pic-table,
+  html.is-embed .pic-table tbody,
+  html.is-embed .pic-table tr,
+  html.is-embed .pic-table td{ display:block; width:100%; min-width:0; }
+  html.is-embed .pic-table thead{ display:none; }
+  html.is-embed .pic-table tbody tr{
+    background:var(--o-white); border:2px solid var(--o-black);
+    margin-bottom:8px; position:relative; padding:5px 5px 5px 13px;
+  }
+  html.is-embed .pic-table tbody tr:hover{ background:var(--o-white); }
+  html.is-embed .pic-table td{
+    border:0; border-bottom:1px solid var(--line); height:auto;
+    display:flex; align-items:flex-start; gap:8px;
+    text-align:left; padding:3px 0;
+  }
+  html.is-embed .pic-table td:last-child{ border-bottom:0; }
+  html.is-embed .pic-table td::before{
+    content:attr(data-label); flex:0 0 88px;
+    font-size:9.5px; text-transform:uppercase; letter-spacing:.07em;
+    font-weight:700; color:var(--o-grey-2); padding-top:8px;
+  }
+  /* Une cellule vide n'apprend rien et coûte une ligne. */
+  html.is-embed .pic-table td:has(.cell.is-empty){ display:none; }
+  html.is-embed .cell{ justify-content:flex-start; text-align:left; min-height:30px; }
+  html.is-embed .cell-text{ text-align:left; }
+  html.is-embed td.col-status{ position:absolute; left:0; top:0; bottom:0; width:7px; padding:0; }
+  html.is-embed td.col-status::before{ display:none; }
+  html.is-embed td.col-check,
+  html.is-embed td.col-tools{ display:inline-flex; width:auto; border:0; }
+  html.is-embed td.col-check::before,
+  html.is-embed td.col-tools::before{ display:none; }
+  html.is-embed td.col-check{ padding:5px 0 6px; }
+  html.is-embed td.col-tools{ position:absolute; top:5px; right:5px; padding:0; }
+}
+
+/* ── Notes en attente ─────────────────────────────────────────────────── */
+html.is-embed .notes-box{ margin-top:14px; }
+html.is-embed .notes-head p{ display:none; }
+html.is-embed .notes-list{ max-height:180px; overflow-y:auto; }
+
+/* Le panneau latéral et les modales sont en position:fixed : dans une iframe
+   « fixed » se cale sur l'iframe, pas sur la page hôte. Le rendu reste donc
+   correct, mais l'espace est étroit — on élargit au maximum. */
 html.is-embed .sheet{ width:min(100%, 560px); }
 html.is-embed .synth{ width:96%; max-height:92%; }
-
-/* Écran étroit : la barre d'outils déborde vite dans une vignette. */
-@media (max-width:900px){
-  html.is-embed .toolbar{ gap:8px; }
-  html.is-embed .toolbar select{ flex:1 1 130px; min-width:0; }
-}

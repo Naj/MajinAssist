@@ -53,22 +53,30 @@
       <div class="search-wrap">
         <input type="search" id="q" placeholder="Rechercher un sujet, une action, une personne…" aria-label="Rechercher">
       </div>
-      <select id="f-collab" aria-label="Filtrer par collaboration"><option value="">Toutes collaborations</option></select>
-      <select id="f-statut" aria-label="Filtrer par statut">
-        <option value="">Tous statuts</option>
-        <option value="en-cours">En cours</option>
-        <option value="en-attente">En attente</option>
-        <option value="bloquee">Bloquée</option>
-        <option value="deleguee">Déléguée</option>
-      </select>
-      <select id="f-tag" aria-label="Filtrer par tag"><option value="">Tous les tags</option></select>
-      <select id="f-echeance" aria-label="Filtrer par échéance">
-        <option value="">Toutes échéances</option>
-        <option value="late">En retard</option>
-        <option value="today">Aujourd'hui</option>
-        <option value="7">Sous 7 jours</option>
-        <option value="none">Sans échéance</option>
-      </select>
+      <!-- Les quatre filtres sont repliés dans un <details> : en vignette, ils
+           occupaient trois rangées à eux seuls et ne laissaient voir que trois
+           tâches. Les identifiants sont inchangés, app.js n'a rien à savoir. -->
+      <details class="tb-filters" id="tbFilters">
+        <summary><span class="tbf-ic">⚙</span> Filtres<span class="tbf-count" id="tbfCount"></span></summary>
+        <div class="tbf-grid">
+          <select id="f-collab" aria-label="Filtrer par collaboration"><option value="">Toutes collaborations</option></select>
+          <select id="f-statut" aria-label="Filtrer par statut">
+            <option value="">Tous statuts</option>
+            <option value="en-cours">En cours</option>
+            <option value="en-attente">En attente</option>
+            <option value="bloquee">Bloquée</option>
+            <option value="deleguee">Déléguée</option>
+          </select>
+          <select id="f-tag" aria-label="Filtrer par tag"><option value="">Tous les tags</option></select>
+          <select id="f-echeance" aria-label="Filtrer par échéance">
+            <option value="">Toutes échéances</option>
+            <option value="late">En retard</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="7">Sous 7 jours</option>
+            <option value="none">Sans échéance</option>
+          </select>
+        </div>
+      </details>
       <div class="toolbar-end">
         <button class="ghost-btn" id="btn-kanban">Kanban</button>
         <button class="ghost-btn" id="btn-columns">Colonnes</button>
