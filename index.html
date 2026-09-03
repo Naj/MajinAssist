@@ -7492,6 +7492,26 @@ function applyNewsSource(){
 }
 
 // ── Flux RSS sauvegardés ──────────────────────────────────
+// Vos cinq flux, posés une seule fois. Un drapeau distinct de la liste
+// elle-même : supprimer un flux ne doit pas le faire revenir au lancement
+// suivant, ce que ferait un simple test « liste vide ».
+const RSS_FLUX_DEFAUT = [
+  { name:'France info — Faits divers', url:'https://www.franceinfo.fr/faits-divers.rss' },
+  { name:'France info — Sport',        url:'https://www.franceinfo.fr/sports.rss' },
+  { name:"L'Équipe — Ligue 1",         url:'https://dwh.lequipe.fr/api/edito/rss?path=/Football/Ligue-1/' },
+  { name:"L'Équipe — Équipe de France",url:'https://dwh.lequipe.fr/api/edito/rss?path=/Football/Equipe-de-France/' },
+  { name:'France info — Politique',    url:'https://www.franceinfo.fr/politique.rss' },
+];
+
+function ensureeFluxDefaut(){
+  if(localStorage.getItem('majin_rss_defaut_pose') === '1') return;
+  const actuels = getSavedRssFeeds();
+  const urls = new Set(actuels.map(f => f.url));
+  RSS_FLUX_DEFAUT.forEach(f => { if(!urls.has(f.url)) actuels.push(f); });
+  saveSavedRssFeeds(actuels);
+  localStorage.setItem('majin_rss_defaut_pose', '1');
+}
+
 function getSavedRssFeeds(){return JSON.parse(localStorage.getItem('majin_saved_rss')||'[]');}
 function saveSavedRssFeeds(arr){localStorage.setItem('majin_saved_rss',JSON.stringify(arr));}
 
@@ -7549,19 +7569,31 @@ async function fetchNewsFromUrl(rssUrl,label,siteUrl){
   if(statusEl){statusEl.style.color='var(--ai)';statusEl.textContent='⏳ Chargement…';}
   if(refBtn){refBtn.style.opacity='.4';refBtn.style.pointerEvents='none';}
   let loaded=false;
-  // Proxy 1
+
+  // ── Relais maison : notre propre domaine, sans quota ni tiers ──────
+  // Même ordre que le bandeau automatique. C'est ce maillon qui manquait ici
+  // — les trois suivants restent en secours, inchangés.
   try{
+    const r=await fetch(`/api/majin/feed?url=${encodeURIComponent(rssUrl)}`,{signal:AbortSignal.timeout(9000)});
+    if(r.ok){
+      const parsed=parseRssXml(await r.text());
+      if(parsed.length){newsItems=parsed.map(it=>({...it,url:it.url||siteUrl}));loaded=true;}
+    }
+  }catch(e){}
+
+  // Proxy 2
+  if(!loaded)try{
     const r=await fetch(`/api/majin/rss/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`,{signal:AbortSignal.timeout(9000)});
     if(r.ok){const d=await r.json();if(d.status==='ok'&&d.items?.length){newsItems=d.items.slice(0,18).map(it=>({title:(it.title||'').trim(),url:it.link||siteUrl})).filter(it=>it.title);if(newsItems.length)loaded=true;}}
   }catch(e){}
-  // Proxy 2
+  // Proxy 3
   if(!loaded){
     try{
       const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`,{signal:AbortSignal.timeout(9000)});
       if(r.ok){const d=await r.json();if(d.contents){const p=parseRssXml(d.contents);if(p.length){newsItems=p.map(it=>({...it,url:it.url||siteUrl}));loaded=true;}}}
     }catch(e){}
   }
-  // Proxy 3
+  // Proxy 4
   if(!loaded){
     try{
       const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,{signal:AbortSignal.timeout(9000)});
@@ -7806,7 +7838,7 @@ function swTab(el,id){
   }
   if(id==='apps'){renderMedia();renderMediaCustomPanels();}
   if(id==='cfg'){renderCitySettingsList();
-renderStandbyThemes();renderSavedRssFeeds();renderLocalDesktopApps();}
+renderStandbyThemes();ensureeFluxDefaut();renderSavedRssFeeds();renderLocalDesktopApps();}
 }
 
 // Bouton unique "disposition libre" : agit sur l'onglet actuellement affiché.
