@@ -964,7 +964,46 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
-}/* ═══ Mode contemplation ═══ */
+}/* ═══ Icônes d'applications ═══ */
+.app-ico{ border-radius:6px; transition:transform .22s cubic-bezier(.2,.8,.3,1); }
+.app-ico-wrap{ border-radius:6px; overflow:hidden; }
+.app-mono{
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; color:#fff; line-height:1;
+  font-size:13px; border-radius:6px;
+}
+.app-fav{ object-fit:contain; background:transparent; }
+
+/* Le halo reprend la couleur dominante de l'icône, calculée au chargement.
+   La teinte du domaine sert de valeur de repli tant que l'image n'est pas là. */
+.tile:hover .app-ico,
+.tile:hover .app-ico-wrap,
+.app-row:hover .app-ico,
+.app-row:hover .app-ico-wrap,
+.palette-row:hover .app-ico,
+.palette-row:hover .app-ico-wrap{
+  transform:scale(1.14);
+}
+/* La teinte est portée par l'icône elle-même, en variable CSS posée à la
+   volée par teinterDepuisIcone(). Le halo n'a donc rien à calculer. */
+.app-ico-wrap, .app-ico{ --glow:var(--r); }
+.tile:hover .app-ico-wrap, .tile:hover .app-ico{
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--glow) 55%, transparent),
+             0 4px 16px color-mix(in srgb, var(--glow) 45%, transparent);
+}
+
+/* Apparition en cascade à l'ouverture de l'onglet. Plafonnée à 0,6 s de
+   retard : au-delà, l'attente se remarque plus que l'effet. */
+@keyframes tile-pop{
+  from{ opacity:0; transform:scale(.62) translateY(6px); }
+  to  { opacity:1; transform:scale(1) translateY(0); }
+}
+/* Respect du réglage système : une animation subie est une gêne. */
+@media (prefers-reduced-motion: reduce){
+  .app-ico, .app-ico-wrap{ animation:none !important; transition:none !important; }
+}
+
+/* ═══ Mode contemplation ═══ */
 /* Tout le mobilier s'efface d'un coup. On passe par l'opacité et non par
    display:none : le fondu est doux, et rien n'est démonté — les widgets
    continuent de vivre derrière, prêts à réapparaître intacts. */
@@ -3073,6 +3112,109 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </style>
 
 <script>
+// ── Logos de marque ─────────────────────────────────────────────────────────
+// Volontairement court : ne figurent ici que les applications sans URL
+// exploitable, et celles dont la favicon est trop pauvre pour être agrandie.
+// La clé est comparée en minuscules, sans accent ni ponctuation.
+const MARQUES = {
+  teams:      { c:'#5059C9', d:'M1 5h13v14H1z|M19 5a3 3 0 110 6 3 3 0 010-6z|M15 12h8v7h-8z' },
+  excel:      { c:'#217346', t:'X' },
+  word:       { c:'#2B579A', t:'W' },
+  outlook:    { c:'#0078D4', t:'O' },
+  powerpoint: { c:'#D24726', t:'P' },
+  onenote:    { c:'#7719AA', t:'N' },
+  onedrive:   { c:'#0078D4', t:'▲' },
+  sharepoint: { c:'#038387', t:'S' },
+};
+
+function cleMarque(nom){
+  return String(nom||'')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/g,'');
+}
+
+// ── Couleur dérivée du domaine ──────────────────────────────────────────────
+// Une empreinte simple répartie sur la roue chromatique. Déterministe : la
+// même application garde sa couleur d'une session à l'autre, d'une machine à
+// l'autre. Saturation et luminosité fixes pour que rien ne devienne illisible.
+function couleurDepuisTexte(txt){
+  let h = 0;
+  const t = String(txt||'?');
+  for(let i=0;i<t.length;i++) h = (h*31 + t.charCodeAt(i)) % 360;
+  return `hsl(${h} 58% 46%)`;
+}
+
+function domaineDe(url){
+  try{ return new URL(url).hostname.replace(/^www\./,''); }catch{ return ''; }
+}
+
+// ── Fabrication du visuel ───────────────────────────────────────────────────
+// `taille` en pixels ; `idx` sert au décalage de l'apparition en cascade.
+function iconeApp(app, taille, idx){
+  const px = taille || 26;
+  const retard = Math.min((idx||0)*28, 600);   // cascade plafonnée à 0,6 s
+  const base = `width:${px}px;height:${px}px;display:block;margin:0 auto 6px;`
+             + `animation:tile-pop .34s cubic-bezier(.2,.8,.3,1) ${retard}ms both;`;
+
+  const m = MARQUES[cleMarque(app.name)];
+  if(m){
+    if(m.d){
+      const paths = m.d.split('|').map(d=>`<path d="${d}"/>`).join('');
+      return `<svg class="app-ico" viewBox="0 0 24 24" fill="${m.c}" aria-hidden="true"
+        style="${base}--glow:${m.c};">${paths}</svg>`;
+    }
+    return `<div class="app-ico app-mono" aria-hidden="true"
+      style="${base}background:${m.c};--glow:${m.c};">${m.t}</div>`;
+  }
+
+  const dom = domaineDe(app.url);
+  const lettre = (app.name||'?').trim().charAt(0).toUpperCase();
+  const teinte = couleurDepuisTexte(dom || app.name);
+
+  if(!dom){
+    return `<div class="app-ico app-mono" aria-hidden="true"
+      style="${base}background:${teinte};--glow:${teinte};">${lettre}</div>`;
+  }
+
+  // Le monogramme est posé d'abord et l'image par-dessus : si le relais ne
+  // trouve rien, onerror la retire et le monogramme reste. Aucune case vide,
+  // et aucun scintillement pendant le chargement.
+  const src = '/api/majin/icon?url=' + encodeURIComponent(app.url);
+  return `<span class="app-ico-wrap" style="${base}position:relative;--glow:${teinte};">
+      <span class="app-ico app-mono" aria-hidden="true"
+        style="position:absolute;inset:0;margin:0;background:${teinte};font-size:${Math.round(px*0.5)}px;">${lettre}</span>
+      <img class="app-ico app-fav" src="${src}" alt="" loading="lazy"
+        style="position:absolute;inset:0;margin:0;width:100%;height:100%;"
+        onload="teinterDepuisIcone(this)" onerror="this.remove()"/>
+    </span>`;
+}
+
+// ── Halo teinté par l'icône ─────────────────────────────────────────────────
+// L'image vient de notre propre domaine, donc le canevas reste lisible : une
+// icône tierce l'aurait souillé et bloqué getImageData.
+function teinterDepuisIcone(img){
+  try{
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    const x = c.getContext('2d', { willReadFrequently:true });
+    x.drawImage(img, 0, 0, 16, 16);
+    const d = x.getImageData(0, 0, 16, 16).data;
+
+    let r=0,g=0,b=0,n=0;
+    for(let i=0;i<d.length;i+=4){
+      const a = d[i+3];
+      if(a < 128) continue;                       // pixel transparent
+      const somme = d[i]+d[i+1]+d[i+2];
+      if(somme > 700 || somme < 40) continue;     // blanc ou noir : sans teinte
+      r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++;
+    }
+    if(!n) return;
+    const wrap = img.closest('.app-ico-wrap') || img;
+    wrap.style.setProperty('--glow', `rgb(${Math.round(r/n)} ${Math.round(g/n)} ${Math.round(b/n)})`);
+  }catch{ /* canevas indisponible : le halo garde la couleur par défaut */ }
+}
+
 // ===== MODÈLE GROQ =====
 // llama-3.3-70b-versatile a été arrêté par Groq le 16 août 2026 ;
 // openai/gpt-oss-120b est le remplacement recommandé pour ce profil.
@@ -5646,7 +5788,7 @@ function renderPaletteResults(){
   }
   el.innerHTML=matches.map((a,i)=>`
     <div class="palette-row${i===0?' active':''}" data-idx="${i}" onclick="openPaletteResult(${i})" onmouseenter="setPaletteActive(${i})">
-      <i class="ti ti-${a.icon}"></i>
+      ${iconeApp(a, 20, i)}
       <div style="flex:1;min-width:0;">
         <div class="palette-row-name">${icsEscapeHtml(a.name)}</div>
         <div class="palette-row-cat">${icsEscapeHtml(a.category)}</div>
@@ -6571,7 +6713,7 @@ function makeAppTile(app, editing, onClickFn, onEditFn, onDeleteFn, listKey, idx
   const t = document.createElement('div');
   t.className = 'tile';
   t.style.position = 'relative';
-  t.innerHTML = `<i class="ti ti-${app.icon}" style="font-size:22px;color:var(--r);display:block;margin-bottom:5px;"></i><div class="tile-name" style="font-size:12px;font-weight:700;text-align:center;line-height:1.3;">${app.name}</div>`;
+  t.innerHTML = `${iconeApp(app, 26, idx)}<div class="tile-name" style="font-size:12px;font-weight:700;text-align:center;line-height:1.3;">${app.name}</div>`;
   t.onclick = onClickFn;
   if(editing){
     // Drag & drop
@@ -6637,7 +6779,7 @@ function makeAppTile(app, editing, onClickFn, onEditFn, onDeleteFn, listKey, idx
 
 function makeAppRow(app, editing, onClickFn, onEditFn, onDeleteFn, listKey, idx){
   const row=document.createElement('div');row.className='app-row';
-  row.innerHTML=`<i class="ti ti-${app.icon}"></i><span class="app-name">${app.name}</span>${app.sub?`<span class="app-sub">${app.sub}</span>`:''}`;
+  row.innerHTML=`${iconeApp(app, 20, idx)}<span class="app-name">${app.name}</span>${app.sub?`<span class="app-sub">${app.sub}</span>`:''}`;
   row.onclick=onClickFn;
   if(editing){
     row.draggable=true;
