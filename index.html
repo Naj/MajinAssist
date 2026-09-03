@@ -591,7 +591,7 @@ body.dash-edit-active /* EN-TÊTE MODIFIABLE */
 .info-box code{background:rgba(0,0,0,.35);padding:2px 7px;border-radius:4px;color:var(--ai);}
 
 /* MODALS */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:99995;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
 .modal.open{display:flex;}
 .modal-box{background:var(--s1);border:1.5px solid var(--r);border-radius:14px;padding:24px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;}
 .modal-box.wide{width:620px;}
@@ -964,7 +964,17 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
-}/* ═══ Réglage d'icône dans la modale de vignette ═══ */
+}/* ═══ Agenda — hauteur suivant la vignette ═══ */
+/* La chaîne doit être continue de la vignette jusqu'à la liste : un seul
+   maillon en hauteur automatique et flex:1 n'a plus de repère. min-height:0
+   est indispensable, sans quoi un enfant flex refuse de rétrécir sous la
+   taille de son contenu et déborde au lieu de défiler. */
+#dw-cal.dg-placed > .pan{ display:flex; flex-direction:column; overflow:hidden; }
+#dw-cal #calView{ flex:1; min-height:0; display:flex; flex-direction:column; }
+#dw-cal .cal-shell{ flex:1; min-height:0; display:flex; flex-direction:column; }
+#agendaList{ min-height:0; }
+
+/* ═══ Réglage d'icône dans la modale de vignette ═══ */
 .ticon-mode{ transition:background .18s, color .18s, border-color .18s; }
 .ticon-mode.on{
   background:rgba(226,74,74,.16);
@@ -5336,6 +5346,27 @@ function changeCalMode(mode){
   const iframe=document.querySelector('#calView iframe');if(iframe)iframe.src=newUrl+'&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0';
 }
 function openCalendarCfg(){document.getElementById('calModal').classList.add('open');}
+
+// Le mode ICS se règle dans Paramètres, pas dans la modale de l'agenda Google
+// intégré. On y conduit directement, champ mis en évidence : chercher soi-même
+// le bon panneau dans une page de réglages longue est une corvée inutile.
+function ouvrirReglagesAgenda(){
+  const onglet = document.querySelector('.tab[onclick*="cfg"]');
+  if(onglet && typeof swTab === 'function') swTab(onglet, 'cfg');
+  setTimeout(() => {
+    const pan = document.getElementById('calSettingsPan');
+    const champ = document.getElementById('calIcsUrl');
+    if(pan) pan.scrollIntoView({ behavior:'smooth', block:'center' });
+    if(champ){
+      champ.focus();
+      // Halo passager : sans lui, on arrive sur un panneau de six champs sans
+      // savoir lequel on est venu modifier.
+      champ.style.transition = 'box-shadow .3s';
+      champ.style.boxShadow = '0 0 0 3px rgba(226,74,74,.45)';
+      setTimeout(() => { champ.style.boxShadow = ''; }, 1800);
+    }
+  }, 150);
+}
 function saveCalIframe(){
   const url=document.getElementById('calIframeUrl').value.trim();if(!url)return alert('Collez l\'URL iframe.');
   calIframeUrl=url;localStorage.setItem('majin_cal_iframe',url);
@@ -5554,7 +5585,7 @@ function renderIcsAgenda(el){
     el.innerHTML=`
       <div style="padding:8px 12px;background:rgba(226,74,74,0.08);border:1px solid rgba(226,74,74,0.3);border-radius:8px;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:8px;">
         <i class="ti ti-info-circle" style="color:var(--r);"></i>
-        <span>Aucun lien ICS configuré → <a href="#" onclick="openCalendarCfg();return false;" style="color:var(--r);">Config ↗</a></span>
+        <span>Aucun lien ICS configuré → <a href="#" onclick="ouvrirReglagesAgenda();return false;" style="color:var(--r);">Config ↗</a></span>
       </div>`;
     return;
   }
@@ -5612,11 +5643,11 @@ function renderIcsAgenda(el){
 
   el.innerHTML=`
     ${alerte}
-    <div id="agendaList" style="flex:1;overflow-y:auto;max-height:280px;">${rows}</div>
+    <div id="agendaList" style="flex:1;min-height:0;overflow-y:auto;">${rows}</div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut);">
       <i class="ti ti-refresh" style="cursor:pointer;" onclick="loadIcsCalendar(true)" title="Actualiser"></i>
       <span>Agenda ICS · ${agenda.length} événement${agenda.length>1?'s':''}${calIcsFromCache?' · hors ligne':''}</span>
-      <a href="#" onclick="openCalendarCfg();return false;" style="margin-left:auto;color:var(--ai);">⚙️ Config</a>
+      <a href="#" onclick="ouvrirReglagesAgenda();return false;" style="margin-left:auto;color:var(--ai);">⚙️ Config</a>
     </div>`;
 }
 
