@@ -1487,3 +1487,9 @@ html.focus-on .hint{ display:none; }
    l'impression n'ont plus de cible visible. */
 html.focus-on .toolbar #btn-print,
 html.focus-on .toolbar #btn-columns{ display:none; }
+
+/* Les notes en attente occupaient toute la vignette et repoussaient les tâches
+   hors de vue. Elles restent accessibles en plein écran, sur /taf/ et via le
+   bouton Tableau — la vue Focus répond à « qu'est-ce qui presse », pas à
+   « qu'est-ce que j'avais noté ». */
+html.focus-on .notes-box{ display:none; }
