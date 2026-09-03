@@ -964,7 +964,18 @@ body.is-electron .electron-close-btn{display:flex;}
 .dash-widget[class*="row-"] .cal-shell iframe{
   height:100%;
   min-height:200px;
-}/* ═══ Icônes d'applications ═══ */
+}/* ═══ Réglage d'icône dans la modale de vignette ═══ */
+.ticon-mode{ transition:background .18s, color .18s, border-color .18s; }
+.ticon-mode.on{
+  background:rgba(226,74,74,.16);
+  border-color:var(--r);
+  color:var(--r);
+  font-weight:800;
+}
+#tIconPreview .app-ico,
+#tIconPreview .app-ico-wrap{ animation:none !important; margin:0 !important; }
+
+/* ═══ Icônes d'applications ═══ */
 .app-ico{ border-radius:6px; transition:transform .22s cubic-bezier(.2,.8,.3,1); }
 .app-ico-wrap{ border-radius:6px; overflow:hidden; }
 .app-mono{
@@ -2415,9 +2426,29 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
       Ex Word : <code style="color:var(--ai);">C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE</code></div>
     </div>
     <div class="field"><label>Sous-titre (optionnel)</label><input id="tSub" placeholder="Description courte"/></div>
-    <div class="field"><label>Icône <span style="font-weight:400;font-size:11px;">(nom tabler-icons.io)</span></label>
-      <input id="tIcon" placeholder="ex: bolt, stethoscope, brand-spotify"/>
-      <div style="margin-top:5px;font-size:11px;color:var(--mut);">→ <a href="#" onclick="openUrl('https://tabler-icons.io');return false;" style="color:var(--ai);">Chercher une icône : tabler-icons.io ↗</a></div>
+    <div class="field">
+      <label>Icône</label>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div id="tIconPreview" style="width:46px;height:46px;flex-shrink:0;border-radius:10px;background:var(--bg2);border:1px solid var(--bor);display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-ghost ticon-mode on" data-mode="auto" onclick="setTileIconMode('auto')" style="font-size:11px;padding:5px 11px;">Automatique</button>
+            <button type="button" class="btn-ghost ticon-mode" data-mode="url" onclick="setTileIconMode('url')" style="font-size:11px;padding:5px 11px;">Image</button>
+            <button type="button" class="btn-ghost ticon-mode" data-mode="mono" onclick="setTileIconMode('mono')" style="font-size:11px;padding:5px 11px;">Monogramme</button>
+          </div>
+          <div id="tIconHint" style="margin-top:6px;font-size:11px;color:var(--mut);line-height:1.5;"></div>
+        </div>
+      </div>
+
+      <input id="tIconUrl" placeholder="https://exemple.fr/logo.png" style="display:none;" oninput="refreshTileIconPreview()"/>
+
+      <div id="tIconMonoRow" style="display:none;align-items:center;gap:10px;">
+        <input id="tIconLetter" maxlength="2" placeholder="A" style="width:64px;text-align:center;font-weight:800;" oninput="refreshTileIconPreview()"/>
+        <input type="color" id="tIconColor" value="#E24B4A" style="width:52px;height:38px;padding:3px;background:var(--bg2);border:1px solid var(--bor);border-radius:8px;cursor:pointer;" oninput="refreshTileIconPreview()"/>
+        <span style="font-size:11px;color:var(--mut);">Lettre et couleur</span>
+      </div>
+
+      <input type="hidden" id="tIcon"/>
     </div>
     <!-- DÉPLACER VERS -->
     <div class="field" id="tMoveField" style="display:none;">
@@ -3112,6 +3143,48 @@ body.dash-editing .dash-widget,body.dash-editing-pro .dash-widget,body.dash-edit
 </style>
 
 <script>
+// ── Réglage d'icône dans la modale de vignette ──────────────────────────────
+let tileIconMode = 'auto';
+
+const TICON_AIDES = {
+  auto: "Logo de marque si connu, sinon la vraie icône du site, sinon un monogramme coloré.",
+  url:  "Adresse directe d'une image (png, jpg, svg). Utile quand l'icône du site est illisible en petit.",
+  mono: "Une ou deux lettres sur fond coloré. Le recours quand le site n'a rien d'exploitable.",
+};
+
+function setTileIconMode(mode){
+  tileIconMode = ['auto','url','mono'].includes(mode) ? mode : 'auto';
+  document.querySelectorAll('.ticon-mode').forEach(b =>
+    b.classList.toggle('on', b.dataset.mode === tileIconMode));
+
+  document.getElementById('tIconUrl').style.display = tileIconMode==='url' ? 'block' : 'none';
+  document.getElementById('tIconMonoRow').style.display = tileIconMode==='mono' ? 'flex' : 'none';
+  document.getElementById('tIconHint').textContent = TICON_AIDES[tileIconMode];
+
+  // La lettre par défaut suit le nom saisi, pour éviter un champ vide.
+  const lettre = document.getElementById('tIconLetter');
+  if(tileIconMode==='mono' && !lettre.value){
+    lettre.value = (document.getElementById('tName').value || '?').trim().charAt(0).toUpperCase();
+  }
+  refreshTileIconPreview();
+}
+
+// Aperçu construit par le même code que les vignettes : ce qui est montré ici
+// est exactement ce qui sera affiché, sans rendu parallèle à maintenir.
+function refreshTileIconPreview(){
+  const box = document.getElementById('tIconPreview');
+  if(!box) return;
+  const app = {
+    name: document.getElementById('tName').value || '?',
+    url:  document.getElementById('tUrl').value || '',
+    iconMode: tileIconMode,
+    iconUrl: document.getElementById('tIconUrl').value.trim(),
+    iconLetter: document.getElementById('tIconLetter').value.trim(),
+    iconColor: document.getElementById('tIconColor').value,
+  };
+  box.innerHTML = iconeApp(app, 34, 0);
+}
+
 // ── Logos de marque ─────────────────────────────────────────────────────────
 // Volontairement court : ne figurent ici que les applications sans URL
 // exploitable, et celles dont la favicon est trop pauvre pour être agrandie.
@@ -3146,7 +3219,21 @@ function couleurDepuisTexte(txt){
 }
 
 function domaineDe(url){
-  try{ return new URL(url).hostname.replace(/^www\./,''); }catch{ return ''; }
+  let u = String(url||'').trim();
+  // Certaines vignettes forcent le navigateur : « microsoft-edge:https://… ».
+  // new URL() n'y voit alors que le protocole microsoft-edge: et rend un
+  // hostname vide. On récupère l'adresse http(s) réellement visée.
+  const imbrique = u.match(/https?:\/\/[^\s"']+/i);
+  if(imbrique && !/^https?:/i.test(u)) u = imbrique[0];
+  try{ return new URL(u).hostname.replace(/^www\./,''); }catch{ return ''; }
+}
+
+// L'adresse réellement interrogeable par le relais d'icônes, protocole
+// applicatif éventuel retiré.
+function urlIconeDe(url){
+  const u = String(url||'').trim();
+  const imbrique = u.match(/https?:\/\/[^\s"']+/i);
+  return imbrique ? imbrique[0] : '';
 }
 
 // ── Fabrication du visuel ───────────────────────────────────────────────────
@@ -3156,6 +3243,21 @@ function iconeApp(app, taille, idx){
   const retard = Math.min((idx||0)*28, 600);   // cascade plafonnée à 0,6 s
   const base = `width:${px}px;height:${px}px;display:block;margin:0 auto 6px;`
              + `animation:tile-pop .34s cubic-bezier(.2,.8,.3,1) ${retard}ms both;`;
+
+  // Réglages explicites d'abord : ils sont un choix de Najim, ils passent
+  // avant toute détection automatique.
+  if(app.iconMode === 'url' && app.iconUrl){
+    return `<span class="app-ico-wrap" style="${base}position:relative;--glow:var(--r);">
+        <img class="app-ico app-fav" src="${app.iconUrl}" alt="" loading="lazy"
+          style="position:absolute;inset:0;margin:0;width:100%;height:100%;"/>
+      </span>`;
+  }
+  if(app.iconMode === 'mono'){
+    const c = app.iconColor || '#E24B4A';
+    const l = app.iconLetter || (app.name||'?').trim().charAt(0).toUpperCase();
+    return `<div class="app-ico app-mono" aria-hidden="true"
+      style="${base}background:${c};--glow:${c};font-size:${Math.round(px*0.5)}px;">${l}</div>`;
+  }
 
   const m = MARQUES[cleMarque(app.name)];
   if(m){
@@ -3180,7 +3282,7 @@ function iconeApp(app, taille, idx){
   // Le monogramme est posé d'abord et l'image par-dessus : si le relais ne
   // trouve rien, onerror la retire et le monogramme reste. Aucune case vide,
   // et aucun scintillement pendant le chargement.
-  const src = '/api/majin/icon?url=' + encodeURIComponent(app.url);
+  const src = '/api/majin/icon?url=' + encodeURIComponent(urlIconeDe(app.url) || app.url);
   return `<span class="app-ico-wrap" style="${base}position:relative;--glow:${teinte};">
       <span class="app-ico app-mono" aria-hidden="true"
         style="position:absolute;inset:0;margin:0;background:${teinte};font-size:${Math.round(px*0.5)}px;">${lettre}</span>
@@ -7048,6 +7150,11 @@ function openTileModal(listKey,idx,app){
   document.getElementById('tUrl').value=app.url||'';
   document.getElementById('tSub').value=app.sub||'';
   document.getElementById('tIcon').value=app.icon||'link';
+  // Réglages d'icône : on repart de ce que la vignette porte déjà.
+  document.getElementById('tIconUrl').value=app.iconUrl||'';
+  document.getElementById('tIconLetter').value=app.iconLetter||'';
+  document.getElementById('tIconColor').value=app.iconColor||'#E24B4A';
+  setTileIconMode(app.iconMode||'auto');
   // Bouton Supprimer — visible seulement en mode édition (idx >= 0)
   const delBtn=document.getElementById('tDeleteBtn');
   if(delBtn)delBtn.style.display=idx>=0?'flex':'none';
@@ -7134,6 +7241,18 @@ function deleteTile(){
 }
 function saveTile(){
   const newApp={name:document.getElementById('tName').value,url:document.getElementById('tUrl').value,icon:document.getElementById('tIcon').value||'link',sub:document.getElementById('tSub').value};
+  // Les réglages d'icône ne sont enregistrés que s'ils s'écartent du mode
+  // automatique : une vignette ordinaire ne traîne aucun champ inutile, et
+  // repasser en automatique efface bien les traces du réglage précédent.
+  const mode=tileIconMode||'auto';
+  if(mode==='url'){
+    newApp.iconMode='url';
+    newApp.iconUrl=document.getElementById('tIconUrl').value.trim();
+  }else if(mode==='mono'){
+    newApp.iconMode='mono';
+    newApp.iconLetter=document.getElementById('tIconLetter').value.trim();
+    newApp.iconColor=document.getElementById('tIconColor').value;
+  }
   const k=editingList;
   // Vérifier si un déplacement est demandé
   const moveSel=document.getElementById('tMoveTarget');
